@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Test", "Test\Test.fsproj", "{2E066B23-0FD5-40E1-A426-CBBF9328D741}"
+EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Betelgeuse", "Betelgeuse\Betelgeuse.fsproj", "{F1657537-C19B-48BB-8412-0E785DF00C2E}"
 EndProject
 Global
@@ -13,6 +15,10 @@ Global
 		{F1657537-C19B-48BB-8412-0E785DF00C2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F1657537-C19B-48BB-8412-0E785DF00C2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F1657537-C19B-48BB-8412-0E785DF00C2E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E066B23-0FD5-40E1-A426-CBBF9328D741}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E066B23-0FD5-40E1-A426-CBBF9328D741}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E066B23-0FD5-40E1-A426-CBBF9328D741}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E066B23-0FD5-40E1-A426-CBBF9328D741}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
