@@ -5,6 +5,7 @@ open System.Text
 open System.Windows.Forms
 
 open ELF
+open Alpha.Disassemble
 
 let f = new Form(Text = "Betelgeuse")
 let mono = new Font(FontFamily.GenericMonospace, f.Font.Size)
@@ -18,7 +19,22 @@ let open'(fn:string) =
     use br = new BinaryReader(fs)
     let sb = new StringBuilder()
     try
-        ignore <| ELF64.Read sb br
+        let elf = ELF64.Read sb br
+        
+        ignore <| sb.AppendLine()
+        let text = elf.Text
+        let mutable addr = text.sh_addr
+        let end' = addr + text.sh_size
+        let mutable off = text.sh_offset;
+        fs.Position <- off |> int64
+        while addr < end' do
+            ignore <| sb.AppendFormat("{0:x8}: ", off)
+            if off <> addr then ignore <| sb.AppendFormat("[{0:x8}] ", addr)
+            let code = br.ReadUInt32()
+            ignore <| sb.AppendFormat("{0:x8} => {1}", code, getOp(code))
+            ignore <| sb.AppendLine()
+            off  <- off  + 4UL
+            addr <- addr + 4UL
     with ex ->
         ignore <| sb.AppendLine(ex.Message)
     t.Text <- sb.ToString()
