@@ -1,27 +1,38 @@
-﻿module Alpha.Memory
+﻿namespace Alpha
 
 open System
 open System.IO
 
 open ELF
 
-let stackSize  = 1024UL * 1024UL // 1MB
-let stackStart = 0x00f00000UL
-let stackEnd   = stackStart + stackSize // 01000000
-let putcharAddress = 0x10000000UL
+module Memory =
+    let stackSize  = 1024UL * 1024UL // 1MB
+    let stackStart = 0x00f00000UL
+    let stackEnd   = stackStart + stackSize // 01000000
+    let putcharAddress = 0x10000000UL
+
+open Memory
 
 type Ptr = { buf:byte[]; ptr:int }
 
-type MMU =
-    { stack      : byte[]
+type VM =
+    { mutable pc : uint64
+      reg        : uint64[]
+      frg        : float[]
+      stack      : byte[]
       memory     : byte[]
       memoryStart: uint64
       memoryEnd  : uint64
       output     : TextWriter }
 
+    member x.Abort(msg:string) = new Exception(sprintf "pc=%016x: %s" (x.pc - 4UL) msg)
+
     static member Create (elf:ELF64) (data:byte[]) (output:TextWriter) =
         let vm =
-            { stack       = Array.zeroCreate<byte> (stackSize |> int)
+            { pc          = elf.e_entry
+              reg         = Array.zeroCreate<uint64> 32
+              frg         = Array.zeroCreate<float> 32
+              stack       = Array.zeroCreate<byte> (stackSize |> int)
               memory      = Array.zeroCreate<byte> (elf.Size  |> int)
               memoryStart = elf.Start
               memoryEnd   = elf.End
@@ -38,7 +49,7 @@ type MMU =
         else if addr >= stackStart && addr <= stackEnd - uint64(size) then
             { buf = x.stack; ptr = (addr - stackStart) |> int }
         else
-            failwith(sprintf "不正なアドレス: %016x" addr)
+            raise <| x.Abort(sprintf "不正なアドレス: %016x" addr)
 
     member x.WriteDouble (addr:uint64) (v:float) =
         let mp = x.GetPtr addr 8

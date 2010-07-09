@@ -5,8 +5,8 @@ open System.Text
 open System.Windows.Forms
 
 open ELF
+open Alpha
 open Alpha.Disassemble
-open Alpha.Memory
 
 let f = new Form(Text = "Betelgeuse - Alpha Orionis",
                  StartPosition = FormStartPosition.WindowsDefaultBounds)
@@ -42,7 +42,7 @@ let open'(fn:string) =
         let elf = ELF64.Read sw br
         
         sw <- sw2
-        let mmu = MMU.Create elf data sw3
+        let vm = VM.Create elf data sw3
         let text = elf.Text
         let mutable addr = text.sh_addr
         let end' = addr + text.sh_size
@@ -51,7 +51,7 @@ let open'(fn:string) =
         while addr < end' do
             sw.Write("{0:x8}: ", off)
             if off <> addr then sw.Write("[{0:x8}] ", addr)
-            let code = mmu.Read32 addr
+            let code = vm.Read32 addr
             disassemble sw addr code |> ignore
             sw.WriteLine()
             off  <- off  + 4UL
