@@ -15,7 +15,7 @@ type Ptr = { buf:byte[]; ptr:int }
 
 let createVM (elf:ELF64) (data:byte[]) =
     let vm =
-        { pc          = elf.e_entry
+        { pc          = 0UL
           reg         = Array.zeroCreate<uint64> 32
           frg         = Array.zeroCreate<float> 32
           stack       = Array.zeroCreate<byte> (stackSize |> int)

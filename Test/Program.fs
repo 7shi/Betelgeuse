@@ -7,6 +7,7 @@ open System.Windows.Forms
 open ELF
 open Alpha
 open Alpha.Disassemble
+open Alpha.Exec
 open Alpha.Memory
 
 let f = new Form(Text = "Betelgeuse - Alpha Orionis",
@@ -17,17 +18,17 @@ let createTextBox() =
     new TextBox(Multiline = true, ScrollBars = ScrollBars.Both,
                 Dock = DockStyle.Fill, WordWrap = false, Font = mono)
 
-let sc1 = new SplitContainer(Dock = DockStyle.Fill, Orientation = Orientation.Horizontal)
-let sc2 = new SplitContainer(Dock = DockStyle.Fill)
-sc1.Panel1.Controls.Add sc2
+let sc1 = new SplitContainer(Dock = DockStyle.Fill)
+let sc2 = new SplitContainer(Dock = DockStyle.Fill, Orientation = Orientation.Horizontal)
+sc1.Panel2.Controls.Add sc2
 f.Controls.Add sc1
 
 let t1 = createTextBox()
 let t2 = createTextBox()
 let t3 = createTextBox()
-sc2.Panel1.Controls.Add t1
-sc2.Panel2.Controls.Add t2
-sc1.Panel2.Controls.Add t3
+sc1.Panel1.Controls.Add t1
+sc2.Panel1.Controls.Add t2
+sc2.Panel2.Controls.Add t3
 
 let open'(fn:string) =
     use fs = new FileStream(fn, FileMode.Open)
@@ -57,6 +58,9 @@ let open'(fn:string) =
             sw.WriteLine()
             off  <- off  + 4UL
             addr <- addr + 4UL
+        
+        sw <- sw3
+        exec vm elf sw
     with ex ->
         sw.WriteLine(ex.Message)
     t1.Text <- sw1.ToString()
