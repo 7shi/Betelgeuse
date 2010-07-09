@@ -31,7 +31,7 @@ let open'(fn:string) =
             ignore <| sb.AppendFormat("{0:x8}: ", off)
             if off <> addr then ignore <| sb.AppendFormat("[{0:x8}] ", addr)
             let code = br.ReadUInt32()
-            ignore <| sb.AppendFormat("{0:x8} => {1}", code, getOp(code))
+            ignore <| disassemble sb addr code
             ignore <| sb.AppendLine()
             off  <- off  + 4UL
             addr <- addr + 4UL
