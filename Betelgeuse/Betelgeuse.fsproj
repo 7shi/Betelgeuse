@@ -37,6 +37,7 @@
     <Compile Include="Alpha-enum.fs" />
     <Compile Include="Alpha.Table.fs" />
     <Compile Include="Alpha.Disassemble.fs" />
+    <Compile Include="Alpha.VM.fs" />
     <Compile Include="Alpha.Memory.fs" />
   </ItemGroup>
   <ItemGroup>
