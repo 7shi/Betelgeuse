@@ -3,7 +3,6 @@
 open System
 open System.Collections.Generic
 open System.IO
-open System.Text
 
 open Utils
 
@@ -37,15 +36,15 @@ type Phdr64 =
       p_memsz : uint64
       p_align : uint64 }
    
-    static member Read (sb:StringBuilder) (br:BinaryReader) =
-        { p_type   = readUInt32 sb br any "p_type"
-          p_flags  = readUInt32 sb br any "p_flags"
-          p_offset = readUInt64 sb br any "p_offset"
-          p_vaddr  = readUInt64 sb br any "p_vaddr"
-          p_paddr  = readUInt64 sb br any "p_paddr"
-          p_filesz = readUInt64 sb br any "p_filesz"
-          p_memsz  = readUInt64 sb br any "p_memsz"
-          p_align  = readUInt64 sb br any "p_align" }
+    static member Read tw br =
+        { p_type   = readUInt32 tw br any "p_type"
+          p_flags  = readUInt32 tw br any "p_flags"
+          p_offset = readUInt64 tw br any "p_offset"
+          p_vaddr  = readUInt64 tw br any "p_vaddr"
+          p_paddr  = readUInt64 tw br any "p_paddr"
+          p_filesz = readUInt64 tw br any "p_filesz"
+          p_memsz  = readUInt64 tw br any "p_memsz"
+          p_align  = readUInt64 tw br any "p_align" }
 
 type Shdr64 =
     { sh_name     : uint32
@@ -67,18 +66,18 @@ type Shdr64 =
     
     member x.IsZero = x.sh_name <> 0u
     
-    static member Read (sb:StringBuilder) (br:BinaryReader) (stroff:uint64) =
-        let n1, n2 = readUInt32WithString sb br "sh_name" stroff
+    static member Read tw br (stroff:uint64) =
+        let n1, n2 = readUInt32WithString tw br "sh_name" stroff
         { sh_name      = n1
-          sh_type      = readUInt32 sb br any "sh_type"
-          sh_flags     = readUInt64 sb br any "sh_flags"
-          sh_addr      = readUInt64 sb br any "sh_addr"
-          sh_offset    = readUInt64 sb br any "sh_offset"
-          sh_size      = readUInt64 sb br any "sh_size"
-          sh_link      = readUInt32 sb br any "sh_link"
-          sh_info      = readUInt32 sb br any "sh_info"
-          sh_addralign = readUInt64 sb br any "sh_addralign"
-          sh_entsize   = readUInt64 sb br any "sh_entsize"
+          sh_type      = readUInt32 tw br any "sh_type"
+          sh_flags     = readUInt64 tw br any "sh_flags"
+          sh_addr      = readUInt64 tw br any "sh_addr"
+          sh_offset    = readUInt64 tw br any "sh_offset"
+          sh_size      = readUInt64 tw br any "sh_size"
+          sh_link      = readUInt32 tw br any "sh_link"
+          sh_info      = readUInt32 tw br any "sh_info"
+          sh_addralign = readUInt64 tw br any "sh_addralign"
+          sh_entsize   = readUInt64 tw br any "sh_entsize"
           Name         = n2 }
 
 type ELF64 =
@@ -103,46 +102,46 @@ type ELF64 =
     
     member x.Headers = x.shdrs.ToArray()
     
-    static member Read (sb:StringBuilder) (br:BinaryReader) =
+    static member Read tw br =
         let e_ident = Array.zeroCreate<byte> EI_NIDENT
-        e_ident.[EI_MAG0   ] <- readByte  sb br (Some(0x7fuy), "0x7f") "e_ident.[EI_MAG0   ]"
-        e_ident.[EI_MAG1   ] <- readBChar sb br (Some('E'), "'E'") "e_ident.[EI_MAG1   ]"
-        e_ident.[EI_MAG2   ] <- readBChar sb br (Some('L'), "'L'") "e_ident.[EI_MAG2   ]"
-        e_ident.[EI_MAG3   ] <- readBChar sb br (Some('F'), "'F'") "e_ident.[EI_MAG3   ]"
-        e_ident.[EI_CLASS  ] <- readByte  sb br (Some(ELFCLASS64), "ELFCLASS64") "e_ident.[EI_CLASS  ]"
-        e_ident.[EI_DATA   ] <- readByte  sb br (Some(ELFDATA2LSB), "ELFDATA2LSB") "e_ident.[EI_DATA   ]"
-        e_ident.[EI_VERSION] <- readByte  sb br any "e_ident.[EI_VERSION]"
-        ignore <| sb.AppendFormat("{0:x8}: e_ident.[EI_PAD    ]:", br.BaseStream.Position)
+        e_ident.[EI_MAG0   ] <- readByte  tw br (Some(0x7fuy), "0x7f") "e_ident.[EI_MAG0   ]"
+        e_ident.[EI_MAG1   ] <- readBChar tw br (Some('E'), "'E'") "e_ident.[EI_MAG1   ]"
+        e_ident.[EI_MAG2   ] <- readBChar tw br (Some('L'), "'L'") "e_ident.[EI_MAG2   ]"
+        e_ident.[EI_MAG3   ] <- readBChar tw br (Some('F'), "'F'") "e_ident.[EI_MAG3   ]"
+        e_ident.[EI_CLASS  ] <- readByte  tw br (Some(ELFCLASS64), "ELFCLASS64") "e_ident.[EI_CLASS  ]"
+        e_ident.[EI_DATA   ] <- readByte  tw br (Some(ELFDATA2LSB), "ELFDATA2LSB") "e_ident.[EI_DATA   ]"
+        e_ident.[EI_VERSION] <- readByte  tw br any "e_ident.[EI_VERSION]"
+        tw.Write("{0:x8}: e_ident.[EI_PAD    ]:", br.BaseStream.Position)
         for i = EI_PAD to EI_NIDENT - 1 do
-            ignore <| sb.AppendFormat(" ")
+            tw.Write(" ")
             e_ident.[i] <- br.ReadByte()
-            ignore <| sb.AppendFormat("{0:x2}", e_ident.[i])
-        ignore <| sb.AppendLine()
-        let e_type      = readUInt16 sb br any "e_type"
-        let e_machine   = readUInt16 sb br any "e_machine"
-        let e_version   = readUInt32 sb br any "e_version"
-        let e_entry     = readUInt64 sb br any "e_entry"
-        let e_phoff     = readUInt64 sb br any "e_phoff"
-        let e_shoff     = readUInt64 sb br any "e_shoff"
-        let e_flags     = readUInt32 sb br any "e_flags"
-        let e_ehsize    = readUInt16 sb br any "e_ehsize"
-        let e_phentsize = readUInt16 sb br any "e_phentsize"
-        let e_phnum     = readUInt16 sb br any "e_phnum"
-        let e_shentsize = readUInt16 sb br any "e_shentsize"
-        let e_shnum     = readUInt16 sb br any "e_shnum"
-        let e_shstrndx  = read sb br.BaseStream.Position "e_shstrndx" "{0:x4}" false br.ReadUInt16 any
+            tw.Write("{0:x2}", e_ident.[i])
+        tw.WriteLine()
+        let e_type      = readUInt16 tw br any "e_type"
+        let e_machine   = readUInt16 tw br any "e_machine"
+        let e_version   = readUInt32 tw br any "e_version"
+        let e_entry     = readUInt64 tw br any "e_entry"
+        let e_phoff     = readUInt64 tw br any "e_phoff"
+        let e_shoff     = readUInt64 tw br any "e_shoff"
+        let e_flags     = readUInt32 tw br any "e_flags"
+        let e_ehsize    = readUInt16 tw br any "e_ehsize"
+        let e_phentsize = readUInt16 tw br any "e_phentsize"
+        let e_phnum     = readUInt16 tw br any "e_phnum"
+        let e_shentsize = readUInt16 tw br any "e_shentsize"
+        let e_shnum     = readUInt16 tw br any "e_shnum"
+        let e_shstrndx  = read tw br.BaseStream.Position "e_shstrndx" "{0:x4}" false br.ReadUInt16 any
         let stroff =
             if e_shstrndx = 0us then 0UL else
                 br.BaseStream.Position <- e_shoff + uint64(e_shstrndx * e_shentsize) + 24UL |> int64
                 let stroff = br.ReadUInt64()
-                ignore <| sb.AppendFormat(" => {0:x16}", stroff)
+                tw.Write(" => {0:x16}", stroff)
                 stroff
-        ignore <| sb.AppendLine()
+        tw.WriteLine()
         if e_phoff <> 0UL then
             br.BaseStream.Position <- e_phoff |> int64
             for i = 1 to e_phnum |> int do
-                ignore <| sb.AppendLine()
-                ignore <| Phdr64.Read sb br
+                tw.WriteLine()
+                ignore <| Phdr64.Read tw br
         let mutable Start = 0UL
         let mutable End = 0UL
         let shdrs = new List<Shdr64>()
@@ -150,8 +149,8 @@ type ELF64 =
         if e_shoff <> 0UL then
             br.BaseStream.Position <- e_shoff |> int64
             for i = 1 to e_shnum |> int do
-                ignore <| sb.AppendLine()
-                let sh = Shdr64.Read sb br stroff
+                tw.WriteLine()
+                let sh = Shdr64.Read tw br stroff
                 if sh.Name = ".text" then Text <- sh
                 if sh = Text || sh.sh_addr > 0UL then
                     shdrs.Add(sh)

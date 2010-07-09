@@ -1,7 +1,7 @@
 ﻿module Alpha.Disassemble
 
 open System
-open System.Text
+open System.IO
 
 open Alpha
 open Alpha.Table
@@ -91,24 +91,24 @@ let getOp(code:uint32) =
     | 0x3f -> Op.Bgt
     | _    -> Op.___
 
-let disassemble (sb:StringBuilder) (addr:uint64) (code:uint32) =
+let disassemble (tw:TextWriter) (addr:uint64) (code:uint32) =
     let op = getOp(code)
     let opc = int(code >>> 26)
     let mne = getMnemonic(op);
-    ignore <| sb.AppendFormat("{0:x8} => {1:x2}", code, opc)
+    tw.Write("{0:x8} => {1:x2}", code, opc)
     match formats.[opc] with
     | Format.Pcd ->
         let pal = code &&& 0x03ffffffu
-        ignore <| sb.AppendFormat("      {0:x8}     => {1,-7} {0:x8}", pal, mne)
+        tw.Write("      {0:x8}     => {1,-7} {0:x8}", pal, mne)
     | Format.Bra ->
         let ra = int(code >>> 21) &&& 31
         let disp = int(code &&& 0x001fffffu)
         let sdisp = if disp < 0x00100000
                     then String.Format("{0:x8}", addr + uint64(disp * 4 + 4))
                     else String.Format("{0:x8}", addr - uint64((0x00200000 - disp) * 4 + 4))
-        ignore <| sb.AppendFormat("      r{0:00} {1:x8} => {2,-7} {3},{4}",
+        tw.Write("      r{0:00} {1:x8} => {2,-7} {3},{4}",
             ra, disp, mne, regname.[ra], sdisp)
-        if ra = 31 && op = Op.Br then ignore <| sb.AppendFormat(" => br {0}", sdisp)
+        if ra = 31 && op = Op.Br then tw.Write(" => br {0}", sdisp)
     | Format.Mem ->
         let ra = int(code >>> 21) &&& 31
         let rb = int(code >>> 16) &&& 31
@@ -116,16 +116,16 @@ let disassemble (sb:StringBuilder) (addr:uint64) (code:uint32) =
         let args = if disp < 0x8000
                    then String.Format("{0:x}({1})", disp, regname.[rb])
                    else String.Format("-{0:x}({1})", 0x10000 - disp, regname.[rb])
-        ignore <| sb.AppendFormat("      r{0:00} r{1:00} {2:x4}", ra, rb, disp)
-        ignore <| sb.AppendFormat(" => {0,-7} {1},", mne, regname.[ra])
-        ignore <| sb.Append(args)
+        tw.Write("      r{0:00} r{1:00} {2:x4}", ra, rb, disp)
+        tw.Write(" => {0,-7} {1},", mne, regname.[ra])
+        tw.Write(args)
         if rb = 31 && op = Op.Lda then
-            ignore <| sb.AppendFormat(" => mov {0:x},{1}", disp, regname.[ra])
+            tw.Write(" => mov {0:x},{1}", disp, regname.[ra])
         else if rb = 31 && op = Op.Ldah then
-            ignore <| sb.AppendFormat(" => mov {0:x}0000,{1}", disp, regname.[ra])
+            tw.Write(" => mov {0:x}0000,{1}", disp, regname.[ra])
         else if ra = 31 then
             if disp = 0 && op = Op.Ldq_u then
-                ignore <| sb.Append(" => unop")
+                tw.Write(" => unop")
             else
                 let pse =
                     match op with
@@ -135,44 +135,44 @@ let disassemble (sb:StringBuilder) (addr:uint64) (code:uint32) =
                     | Op.Ldt -> "prefetch_men"
                     | _      -> ""
                 if pse <> "" then
-                    ignore <| sb.AppendFormat("{0} {1}", pse, args)
+                    tw.Write("{0} {1}", pse, args)
     | Format.Mfc ->
         let ra = int(code >>> 21) &&& 31
         let rb = int(code >>> 16) &&& 31
-        ignore <| sb.AppendFormat(".{0:x4} r{1:00} r{2:00}      => {3,-7} {4},{5}",
+        tw.Write(".{0:x4} r{1:00} r{2:00}      => {3,-7} {4},{5}",
             code &&& 0xffffu, ra, rb, mne, regname.[ra], regname.[rb])
     | Format.Mbr ->
         let ra = int(code >>> 21) &&& 31
         let rb = int(code >>> 16) &&& 31
         let disp = int(code &&& 0x3fffu)
-        ignore <| sb.AppendFormat(".{0:x}   ", (code >>> 14) &&& 3u)
-        ignore <| sb.AppendFormat(" r{0:00} r{1:00} {2:x4}", ra, rb, disp)
-        ignore <| sb.AppendFormat(" => {0,-7} {1},({2}),{3:x4}",
+        tw.Write(".{0:x}   ", (code >>> 14) &&& 3u)
+        tw.Write(" r{0:00} r{1:00} {2:x4}", ra, rb, disp)
+        tw.Write(" => {0,-7} {1},({2}),{3:x4}",
             mne, regname.[ra], regname.[rb], disp)
     | Format.Opr ->
         let ra = int(code >>> 21) &&& 31
         let rc = int(code &&& 31u)
-        ignore <| sb.AppendFormat(".{0:x2}  ", (code >>> 5) &&& 0x7fu)
+        tw.Write(".{0:x2}  ", (code >>> 5) &&& 0x7fu)
         let rb, arg2 =
             if (code &&& 0x1000u) = 0u then
                 let rb = int(code >>> 16) &&& 31
-                ignore <| sb.AppendFormat(" r{0:00} r{1:00} r{2:00} ", ra, rb, rc)
+                tw.Write(" r{0:00} r{1:00} r{2:00} ", ra, rb, rc)
                 rb, regname.[rb]
             else
                 let arg2 = String.Format("{0:x2}", (code >>> 13) &&& 0xffu)
-                ignore <| sb.AppendFormat(" r{0:00}  {1} r{2:00} ", ra, arg2, rc)
+                tw.Write(" r{0:00}  {1} r{2:00} ", ra, arg2, rc)
                 -1, arg2
-        ignore <| sb.AppendFormat(" => {0,-7} {1},{2},{3}",
+        tw.Write(" => {0,-7} {1},{2},{3}",
             mne, regname.[ra], arg2, regname.[rc])
         if ra = 31 then
             let pse =
                 match op with
                 | Op.Bis ->
                     if rb = 31 && rc = 31 then
-                        ignore <| sb.Append(" => nop")
+                        tw.Write(" => nop")
                         ""
                     else if rb = 31 then
-                        ignore <| sb.AppendFormat(" => clr {0}", regname.[rc])
+                        tw.Write(" => clr {0}", regname.[rc])
                         ""
                     else
                         "mov"
@@ -184,13 +184,13 @@ let disassemble (sb:StringBuilder) (addr:uint64) (code:uint32) =
                 | Op.Subq__v -> "negq/v"
                 | _ -> ""
             if pse <> "" then
-                ignore <| sb.AppendFormat(" => {0} {1},{2}", pse, arg2, regname.[rc])
+                tw.Write(" => {0} {1},{2}", pse, arg2, regname.[rc])
     | Format.F_P ->
         let fa = int(code >>> 21) &&& 31
         let fb = int(code >>> 16) &&& 31
         let fc = int(code &&& 31u)
-        ignore <| sb.AppendFormat(".{0:x3} ", (code >>> 5) &&& 0x7ffu)
-        ignore <| sb.AppendFormat(" f{0:00} f{1:00} f{2:00}  => {3,-7} f{0:00},f{1:00},f{2:00}",
+        tw.Write(".{0:x3} ", (code >>> 5) &&& 0x7ffu)
+        tw.Write(" f{0:00} f{1:00} f{2:00}  => {3,-7} f{0:00},f{1:00},f{2:00}",
             fa, fb, fc, mne)
         let pst, pse =
             let fpcr() =
@@ -226,10 +226,10 @@ let disassemble (sb:StringBuilder) (addr:uint64) (code:uint32) =
                 | _ -> cpys()
         if pse <> "" then
             match pst with
-            | 0 -> ignore <| sb.AppendFormat(" => {0}", pse)
-            | 1 -> ignore <| sb.AppendFormat(" => {0} f{1:00}", pse, fc)
-            | 2 -> ignore <| sb.AppendFormat(" => {0} f{1:00},f{2:00}", pse, fb, fc)
+            | 0 -> tw.Write(" => {0}", pse)
+            | 1 -> tw.Write(" => {0} f{1:00}", pse, fc)
+            | 2 -> tw.Write(" => {0} f{1:00},f{2:00}", pse, fb, fc)
             | _ -> ()
     | _ ->
-        ignore <| sb.AppendFormat("                   => {0}", mne)
+        tw.Write("                   => {0}", mne)
     op
