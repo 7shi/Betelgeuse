@@ -64,7 +64,7 @@ type Shdr64 =
           sh_offset = 0UL; sh_size = 0UL; sh_link = 0u; sh_info = 0u
           sh_addralign = 0UL; sh_entsize = 0UL; Name = "" }
     
-    member x.IsZero = x.sh_name <> 0u
+    member x.IsZero = x.sh_name = 0u
     
     static member Read tw br (stroff:uint64) =
         let n1, n2 = readUInt32WithString tw br "sh_name" stroff
@@ -101,6 +101,7 @@ type ELF64 =
       End        : uint64 }
     
     member x.Headers = x.shdrs.ToArray()
+    member x.Size = x.End - x.Start
     
     static member Read tw br =
         let e_ident = Array.zeroCreate<byte> EI_NIDENT
@@ -141,7 +142,7 @@ type ELF64 =
             br.BaseStream.Position <- e_phoff |> int64
             for i = 1 to e_phnum |> int do
                 tw.WriteLine()
-                ignore <| Phdr64.Read tw br
+                Phdr64.Read tw br |> ignore
         let mutable Start = 0UL
         let mutable End = 0UL
         let shdrs = new List<Shdr64>()
@@ -152,7 +153,7 @@ type ELF64 =
                 tw.WriteLine()
                 let sh = Shdr64.Read tw br stroff
                 if sh.Name = ".text" then Text <- sh
-                if sh = Text || sh.sh_addr > 0UL then
+                if not sh.IsZero then
                     shdrs.Add(sh)
                     let start = sh.sh_addr
                     let end' = start + sh.sh_size

@@ -6,22 +6,43 @@ open System.Windows.Forms
 
 open ELF
 open Alpha.Disassemble
+open Alpha.Memory
 
-let f = new Form(Text = "Betelgeuse")
+let f = new Form(Text = "Betelgeuse - Alpha Orionis",
+                 StartPosition = FormStartPosition.WindowsDefaultBounds)
+
 let mono = new Font(FontFamily.GenericMonospace, f.Font.Size)
-let t = new TextBox(Multiline = true, ScrollBars = ScrollBars.Both,
-                    Dock = DockStyle.Fill, WordWrap = false, Font = mono,
-                    Text = "*** Betelgeuse - Alpha Orionis ***\r\n")
-f.Controls.Add t
+let createTextBox() =
+    new TextBox(Multiline = true, ScrollBars = ScrollBars.Both,
+                Dock = DockStyle.Fill, WordWrap = false, Font = mono)
+
+let sc1 = new SplitContainer(Dock = DockStyle.Fill, Orientation = Orientation.Horizontal)
+let sc2 = new SplitContainer(Dock = DockStyle.Fill)
+sc1.Panel1.Controls.Add sc2
+f.Controls.Add sc1
+
+let t1 = createTextBox()
+let t2 = createTextBox()
+let t3 = createTextBox()
+sc2.Panel1.Controls.Add t1
+sc2.Panel2.Controls.Add t2
+sc1.Panel2.Controls.Add t3
 
 let open'(fn:string) =
     use fs = new FileStream(fn, FileMode.Open)
-    use br = new BinaryReader(fs)
-    let sw = new StringWriter()
+    let sw1 = new StringWriter()
+    let sw2 = new StringWriter()
+    let sw3 = new StringWriter()
+    let mutable sw = sw1
     try
+        let data = Array.zeroCreate<byte> (fs.Length |> int)
+        fs.Read(data, 0, data.Length) |> ignore
+        
+        let br = new BinaryReader(new MemoryStream(data))
         let elf = ELF64.Read sw br
         
-        sw.WriteLine()
+        sw <- sw2
+        let mmu = MMU.Create elf data sw3
         let text = elf.Text
         let mutable addr = text.sh_addr
         let end' = addr + text.sh_size
@@ -30,21 +51,23 @@ let open'(fn:string) =
         while addr < end' do
             sw.Write("{0:x8}: ", off)
             if off <> addr then sw.Write("[{0:x8}] ", addr)
-            let code = br.ReadUInt32()
-            ignore <| disassemble sw addr code
+            let code = mmu.Read32 addr
+            disassemble sw addr code |> ignore
             sw.WriteLine()
             off  <- off  + 4UL
             addr <- addr + 4UL
     with ex ->
         sw.WriteLine(ex.Message)
-    t.Text <- sw.ToString()
+    t1.Text <- sw1.ToString()
+    t2.Text <- sw2.ToString()
+    t3.Text <- sw3.ToString()
 
 let m = new MainMenu()
 let mi = new MenuItem("開く")
 mi.Click.Add <| fun _ ->
     use ofd = new OpenFileDialog()
     if ofd.ShowDialog() = DialogResult.OK then open' ofd.FileName
-ignore <| m.MenuItems.Add mi
+m.MenuItems.Add mi |> ignore
 f.Menu <- m
 
 [<STAThread>] Application.Run f

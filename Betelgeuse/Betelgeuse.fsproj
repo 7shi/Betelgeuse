@@ -37,6 +37,7 @@
     <Compile Include="Alpha-enum.fs" />
     <Compile Include="Alpha.Table.fs" />
     <Compile Include="Alpha.Disassemble.fs" />
+    <Compile Include="Alpha.Memory.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
