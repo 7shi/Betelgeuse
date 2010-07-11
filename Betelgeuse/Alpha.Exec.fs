@@ -159,6 +159,8 @@ let execStep vm =
             | Op.S8addl -> reg.[rc] <- uint64 << int <| (va_l <<< 3) + vb_l
             | Op.S4subl -> reg.[rc] <- uint64 << int <| (va_l <<< 2) - vb_l
             | Op.S8subl -> reg.[rc] <- uint64 << int <| (va_l <<< 3) - vb_l
+
+            | _ -> ()
     | _ -> raise(vm.Abort(sprintf "未実装 -> %s" (getMnemonic(op))))
 
 let exec vm (elf:ELF64) (tw:TextWriter) =
