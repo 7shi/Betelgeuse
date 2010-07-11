@@ -1,4 +1,5 @@
   Betelgeuse - Alpha Orionis
 
-- Alpha disassembler and interpreter written in F#
-- Visual Studio 2008 Shell with F# CTP 2.0.0.0
+- Alpha disassembler and interpreter written in F# CTP 2.0.0.0
+- Windows Forms project for Visual Studio 2008 Shell
+- Silverlight project for Visual Web Dedveloper 2010 Express Edition
