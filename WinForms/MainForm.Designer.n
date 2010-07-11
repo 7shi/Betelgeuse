@@ -1,0 +1,247 @@
+﻿namespace WinForms
+{
+  public partial class MainForm
+  {
+    /// <summary>
+    /// Required designer variable.
+    /// </summary>
+    private mutable components : System.ComponentModel.IContainer = null;
+    private mutable mainMenu1 : System.Windows.Forms.MainMenu;
+    private mutable menuItem1 : System.Windows.Forms.MenuItem;
+    private mutable splitContainer1 : System.Windows.Forms.SplitContainer;
+    private mutable splitContainer2 : System.Windows.Forms.SplitContainer;
+    private mutable tabControl1 : System.Windows.Forms.TabControl;
+    private mutable tabPage1 : System.Windows.Forms.TabPage;
+    private mutable textBox1 : System.Windows.Forms.TextBox;
+    private mutable tabControl2 : System.Windows.Forms.TabControl;
+    private mutable tabPage2 : System.Windows.Forms.TabPage;
+    private mutable textBox2 : System.Windows.Forms.TextBox;
+    private mutable tabControl3 : System.Windows.Forms.TabControl;
+    private mutable tabPage3 : System.Windows.Forms.TabPage;
+    private mutable textBox3 : System.Windows.Forms.TextBox;
+    private mutable openFileDialog1 : System.Windows.Forms.OpenFileDialog;
+
+    /// <summary>
+    /// Clean up any resources being used.
+    /// </summary>
+    /// <param name="disposing">
+    /// true if managed resources should be disposed; otherwise, false.
+    /// </param>
+    protected override Dispose(disposing : bool) :  void
+    {
+      when (disposing && components != null)
+        components.Dispose();
+
+      base.Dispose(disposing);
+    }
+
+    /// <summary>
+    /// Required method for Designer support - do not modify
+    /// the contents of this method with the code editor.
+    /// </summary>
+    private InitializeComponent() :  void
+    {
+      this.components = System.ComponentModel.Container();
+      this.mainMenu1 = System.Windows.Forms.MainMenu(this.components);
+      this.menuItem1 = System.Windows.Forms.MenuItem();
+      this.splitContainer1 = System.Windows.Forms.SplitContainer();
+      this.tabControl1 = System.Windows.Forms.TabControl();
+      this.tabPage1 = System.Windows.Forms.TabPage();
+      this.textBox1 = System.Windows.Forms.TextBox();
+      this.splitContainer2 = System.Windows.Forms.SplitContainer();
+      this.tabControl2 = System.Windows.Forms.TabControl();
+      this.tabPage2 = System.Windows.Forms.TabPage();
+      this.textBox2 = System.Windows.Forms.TextBox();
+      this.tabControl3 = System.Windows.Forms.TabControl();
+      this.tabPage3 = System.Windows.Forms.TabPage();
+      this.textBox3 = System.Windows.Forms.TextBox();
+      this.openFileDialog1 = System.Windows.Forms.OpenFileDialog();
+      this.splitContainer1.Panel1.SuspendLayout();
+      this.splitContainer1.Panel2.SuspendLayout();
+      this.splitContainer1.SuspendLayout();
+      this.tabControl1.SuspendLayout();
+      this.tabPage1.SuspendLayout();
+      this.splitContainer2.Panel1.SuspendLayout();
+      this.splitContainer2.Panel2.SuspendLayout();
+      this.splitContainer2.SuspendLayout();
+      this.tabControl2.SuspendLayout();
+      this.tabPage2.SuspendLayout();
+      this.tabControl3.SuspendLayout();
+      this.tabPage3.SuspendLayout();
+      this.SuspendLayout();
+      // 
+      // mainMenu1
+      // 
+      this.mainMenu1.MenuItems.AddRange(array[
+                  this.menuItem1]);
+      // 
+      // menuItem1
+      // 
+      this.menuItem1.Index = 0;
+      this.menuItem1.Text = "開く";
+      this.menuItem1.Click += System.EventHandler(this.menuItem1_Click);
+      // 
+      // splitContainer1
+      // 
+      this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
+      this.splitContainer1.Location = System.Drawing.Point(0,  0);
+      this.splitContainer1.Name = "splitContainer1";
+      // 
+      // splitContainer1.Panel1
+      // 
+      this.splitContainer1.Panel1.Controls.Add(this.tabControl1);
+      // 
+      // splitContainer1.Panel2
+      // 
+      this.splitContainer1.Panel2.Controls.Add(this.splitContainer2);
+      this.splitContainer1.Size = System.Drawing.Size(694,  491);
+      this.splitContainer1.SplitterDistance = 230;
+      this.splitContainer1.TabIndex = 0;
+      // 
+      // tabControl1
+      // 
+      this.tabControl1.Controls.Add(this.tabPage1);
+      this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+      this.tabControl1.Location = System.Drawing.Point(0,  0);
+      this.tabControl1.Name = "tabControl1";
+      this.tabControl1.SelectedIndex = 0;
+      this.tabControl1.Size = System.Drawing.Size(230,  491);
+      this.tabControl1.TabIndex = 0;
+      // 
+      // tabPage1
+      // 
+      this.tabPage1.Controls.Add(this.textBox1);
+      this.tabPage1.Location = System.Drawing.Point(4,  21);
+      this.tabPage1.Name = "tabPage1";
+      this.tabPage1.Padding = System.Windows.Forms.Padding(3);
+      this.tabPage1.Size = System.Drawing.Size(222,  466);
+      this.tabPage1.TabIndex = 0;
+      this.tabPage1.Text = "ELF Headers";
+      this.tabPage1.UseVisualStyleBackColor = true;
+      // 
+      // textBox1
+      // 
+      this.textBox1.Dock = System.Windows.Forms.DockStyle.Fill;
+      this.textBox1.Location = System.Drawing.Point(3,  3);
+      this.textBox1.Multiline = true;
+      this.textBox1.Name = "textBox1";
+      this.textBox1.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+      this.textBox1.Size = System.Drawing.Size(216,  460);
+      this.textBox1.TabIndex = 0;
+      this.textBox1.WordWrap = false;
+      // 
+      // splitContainer2
+      // 
+      this.splitContainer2.Dock = System.Windows.Forms.DockStyle.Fill;
+      this.splitContainer2.Location = System.Drawing.Point(0,  0);
+      this.splitContainer2.Name = "splitContainer2";
+      this.splitContainer2.Orientation = System.Windows.Forms.Orientation.Horizontal;
+      // 
+      // splitContainer2.Panel1
+      // 
+      this.splitContainer2.Panel1.Controls.Add(this.tabControl2);
+      // 
+      // splitContainer2.Panel2
+      // 
+      this.splitContainer2.Panel2.Controls.Add(this.tabControl3);
+      this.splitContainer2.Size = System.Drawing.Size(460,  491);
+      this.splitContainer2.SplitterDistance = 334;
+      this.splitContainer2.TabIndex = 0;
+      // 
+      // tabControl2
+      // 
+      this.tabControl2.Controls.Add(this.tabPage2);
+      this.tabControl2.Dock = System.Windows.Forms.DockStyle.Fill;
+      this.tabControl2.Location = System.Drawing.Point(0,  0);
+      this.tabControl2.Name = "tabControl2";
+      this.tabControl2.SelectedIndex = 0;
+      this.tabControl2.Size = System.Drawing.Size(460,  334);
+      this.tabControl2.TabIndex = 1;
+      // 
+      // tabPage2
+      // 
+      this.tabPage2.Controls.Add(this.textBox2);
+      this.tabPage2.Location = System.Drawing.Point(4,  21);
+      this.tabPage2.Name = "tabPage2";
+      this.tabPage2.Padding = System.Windows.Forms.Padding(3);
+      this.tabPage2.Size = System.Drawing.Size(452,  309);
+      this.tabPage2.TabIndex = 0;
+      this.tabPage2.Text = "Disassemble";
+      this.tabPage2.UseVisualStyleBackColor = true;
+      // 
+      // textBox2
+      // 
+      this.textBox2.Dock = System.Windows.Forms.DockStyle.Fill;
+      this.textBox2.Location = System.Drawing.Point(3,  3);
+      this.textBox2.Multiline = true;
+      this.textBox2.Name = "textBox2";
+      this.textBox2.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+      this.textBox2.Size = System.Drawing.Size(446,  303);
+      this.textBox2.TabIndex = 1;
+      this.textBox2.WordWrap = false;
+      // 
+      // tabControl3
+      // 
+      this.tabControl3.Controls.Add(this.tabPage3);
+      this.tabControl3.Dock = System.Windows.Forms.DockStyle.Fill;
+      this.tabControl3.Location = System.Drawing.Point(0,  0);
+      this.tabControl3.Name = "tabControl3";
+      this.tabControl3.SelectedIndex = 0;
+      this.tabControl3.Size = System.Drawing.Size(460,  153);
+      this.tabControl3.TabIndex = 1;
+      // 
+      // tabPage3
+      // 
+      this.tabPage3.Controls.Add(this.textBox3);
+      this.tabPage3.Location = System.Drawing.Point(4,  21);
+      this.tabPage3.Name = "tabPage3";
+      this.tabPage3.Padding = System.Windows.Forms.Padding(3);
+      this.tabPage3.Size = System.Drawing.Size(452,  128);
+      this.tabPage3.TabIndex = 0;
+      this.tabPage3.Text = "Output";
+      this.tabPage3.UseVisualStyleBackColor = true;
+      // 
+      // textBox3
+      // 
+      this.textBox3.Dock = System.Windows.Forms.DockStyle.Fill;
+      this.textBox3.Location = System.Drawing.Point(3,  3);
+      this.textBox3.Multiline = true;
+      this.textBox3.Name = "textBox3";
+      this.textBox3.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+      this.textBox3.Size = System.Drawing.Size(446,  122);
+      this.textBox3.TabIndex = 1;
+      this.textBox3.WordWrap = false;
+      // 
+      // openFileDialog1
+      // 
+      this.openFileDialog1.FileName = "openFileDialog1";
+      // 
+      // MainForm
+      // 
+      this.AutoScaleDimensions = System.Drawing.SizeF(6f,  12f);
+      this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+      this.ClientSize = System.Drawing.Size(694,  491);
+      this.Controls.Add(this.splitContainer1);
+      this.Menu = this.mainMenu1;
+      this.Name = "MainForm";
+      this.StartPosition = System.Windows.Forms.FormStartPosition.WindowsDefaultBounds;
+      this.Text = "Betelgeuse - Alpha Orionis";
+      this.splitContainer1.Panel1.ResumeLayout(false);
+      this.splitContainer1.Panel2.ResumeLayout(false);
+      this.splitContainer1.ResumeLayout(false);
+      this.tabControl1.ResumeLayout(false);
+      this.tabPage1.ResumeLayout(false);
+      this.tabPage1.PerformLayout();
+      this.splitContainer2.Panel1.ResumeLayout(false);
+      this.splitContainer2.Panel2.ResumeLayout(false);
+      this.splitContainer2.ResumeLayout(false);
+      this.tabControl2.ResumeLayout(false);
+      this.tabPage2.ResumeLayout(false);
+      this.tabPage2.PerformLayout();
+      this.tabControl3.ResumeLayout(false);
+      this.tabPage3.ResumeLayout(false);
+      this.tabPage3.PerformLayout();
+      this.ResumeLayout(false);
+    }
+  }
+}
