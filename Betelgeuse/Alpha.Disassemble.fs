@@ -105,7 +105,7 @@ let disassemble (tw:TextWriter) (addr:uint64) (code:uint32) =
         let disp = int(code &&& 0x001fffffu)
         let sdisp = if disp < 0x00100000
                     then String.Format("{0:x8}", addr + uint64(disp * 4 + 4))
-                    else String.Format("{0:x8}", addr - uint64((0x00200000 - disp) * 4 + 4))
+                    else String.Format("{0:x8}", addr - uint64(0x00200000 - disp) * 4UL + 4UL)
         tw.Write("      r{0:00} {1:x8} => {2,-7} {3},{4}",
             ra, disp, mne, regname.[ra], sdisp)
         if ra = 31 && op = Op.Br then tw.Write(" => br {0}", sdisp)
