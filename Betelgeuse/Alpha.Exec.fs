@@ -8,6 +8,7 @@ open Alpha
 open Alpha.Disassemble
 open Alpha.Memory
 open Alpha.Table
+open Alpha.Syscall
 
 let execStep vm =
     let code = read32 vm vm.pc
@@ -161,7 +162,7 @@ let execStep vm =
             | Op.S8subl -> reg.[rc] <- uint64 << int <| (va_l <<< 3) - vb_l
 
             | _ -> ()
-    | _ -> raise(vm.Abort(sprintf "未実装 -> %s" (getMnemonic(op))))
+    | _ -> raise << vm.Abort <| sprintf "未実装: %s" (getMnemonic op)
 
 let exec vm (elf:ELF64) (tw:TextWriter) =
     vm.out <- tw
@@ -180,9 +181,13 @@ let exec vm (elf:ELF64) (tw:TextWriter) =
 
     tw.WriteLine("pc={0:x16}: 開始", vm.pc)
     while (vm.pc <> stackEnd) do
-        if vm.pc < start || vm.pc >= end' then
-            raise(vm.Abort("不正な実行アドレス"))
-        execStep vm
+        if funcStart <= vm.pc && vm.pc < funcEnd then
+            callFunc vm
+        else if start <= vm.pc && vm.pc < end' then
+            execStep vm
+        else
+            vm.pc <- vm.pc + 4UL
+            raise << vm.Abort <| "不正な実行アドレス"
 
     tw.WriteLine()
     tw.WriteLine("---")
