@@ -59,6 +59,7 @@
     <Compile Include="Alpha.Disassemble.fs" />
     <Compile Include="Alpha.VM.fs" />
     <Compile Include="Alpha.Memory.fs" />
+    <Compile Include="Alpha.Syscall.fs" />
     <Compile Include="Alpha.Exec.fs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" />
