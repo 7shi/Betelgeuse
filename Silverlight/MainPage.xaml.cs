@@ -11,7 +11,6 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Shapes;
 
 namespace Betelgeuse
 {
@@ -40,7 +39,7 @@ namespace Betelgeuse
 
         private byte[] data;
 
-        private void ReadElf(Stream s)
+        private void ReadElf(string fn, Stream s)
         {
             var sw1 = new StringWriter();
             var sw2 = new StringWriter();
@@ -77,7 +76,7 @@ namespace Betelgeuse
 
                 sw = sw3;
                 msg = "実行に失敗しました。";
-                Alpha.Exec.exec(vm, elf, sw);
+                Alpha.Exec.exec(vm, elf, sw, new[] { Path.GetFileName(fn) });
             }
             catch (Exception ex)
             {
@@ -101,7 +100,7 @@ namespace Betelgeuse
                 if (fi.Length > 200 * 1024)
                     throw new Exception("ファイルが大き過ぎます。上限は200KBです。");
                 using (var fs = ofd.File.OpenRead())
-                    ReadElf(fs);
+                    ReadElf(fi.Name, fs);
             }
             catch (Exception ex)
             {
@@ -127,7 +126,7 @@ namespace Betelgeuse
             {
                 var uri1 = new Uri("Test/" + t, UriKind.Relative);
                 using (var s = Application.GetResourceStream(uri1).Stream)
-                    ReadElf(s);
+                    ReadElf(t.ToString(), s);
                 tb = textBox3;
                 var uri2 = new Uri("Test/" + t + ".c", UriKind.Relative);
                 using (var s = Application.GetResourceStream(uri2).Stream)

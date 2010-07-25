@@ -2,6 +2,7 @@
 
 open System
 open System.IO
+open System.Text
 
 open ELF
 open Alpha
@@ -164,14 +165,26 @@ let execStep vm =
             | _ -> ()
     | _ -> raise << vm.Abort <| sprintf "未実装: %s" (getMnemonic op)
 
-let exec vm (elf:ELF64) (tw:TextWriter) =
+let exec vm (elf:ELF64) (tw:TextWriter) (args:string[]) =
     vm.out <- tw
  
     array.Clear(vm.stack, 0, vm.stack.Length)
     array.Clear(vm.reg, 0, vm.reg.Length)
     array.Clear(vm.frg, 0, vm.frg.Length)
+    
+    let argb = [ for arg in args -> Encoding.UTF8.GetBytes(arg) ]
+    let mutable pargs = ((stackSize |> int) - List.sum([ for arg in argb -> argb.Length])) >>> 3 <<< 3
+    let pargv = pargs - args.Length * 8
+    for i = 0 to args.Length - 1 do
+        array.Copy(BitConverter.GetBytes(stackStart + (pargs |> uint64)), 0, vm.stack, pargv + i * 8, 8)
+        array.Copy(argb.[i], 0, vm.stack, pargs, argb.[i].Length)
+        pargs <- pargs + argb.[i].Length
+    
+    let argv = stackStart + (pargv |> uint64)
     vm.reg.[Regs.RA |> int] <- stackEnd
-    vm.reg.[Regs.SP |> int] <- stackEnd
+    vm.reg.[Regs.SP |> int] <- argv
+    vm.reg.[Regs.A0 |> int] <- args.Length |> uint64
+    vm.reg.[Regs.A1 |> int] <- argv
 
     let text  = elf.Text
     let start = text.sh_addr
@@ -180,6 +193,7 @@ let exec vm (elf:ELF64) (tw:TextWriter) =
     vm.reg.[Regs.T12 |> int] <- elf.e_entry // t12 for gp
 
     tw.WriteLine("pc={0:x16}: 開始", vm.pc)
+    
     while (vm.pc <> stackEnd) do
         if start <= vm.pc && vm.pc < end' then
             execStep vm
@@ -189,6 +203,5 @@ let exec vm (elf:ELF64) (tw:TextWriter) =
             vm.pc <- vm.pc + 4UL
             raise << vm.Abort <| "不正な実行アドレス"
 
-    tw.WriteLine()
     tw.WriteLine("---")
     tw.WriteLine("完了しました。")

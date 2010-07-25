@@ -2,9 +2,9 @@ int (*fputc)(int, void *) = (void *)0x00ef0004;
 
 void printstr(char *s);
 
-void entry()
+void main()
 {
-    printstr("Hello, World!");
+    printstr("Hello, World!\n");
 }
 
 void printstr(char *s)

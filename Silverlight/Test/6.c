@@ -26,9 +26,12 @@ void *memset(void *, int, int);
 
 /* -------------------------------- */
 
-void entry()
+int main(int argc, char *argv[])
 {
+    int i;
     char buf[16];
+    for (i = 0; i < argc; i++)
+        printf("argv[%d] = \"%s\"\n", i, argv[i]);
     memset(buf, 'a', 4);
     buf[4] = 0;
     printf("%s\n", buf);
@@ -39,7 +42,8 @@ void entry()
     printf("%d\n", strcmp("a", "b"));
     printf("%d\n", strcmp("a", "ab"));
     printf("%d\n", strcmp("ab", "a"));
-    printf("%08x %8d", 0x1234, 1234);
+    printf("%08x %8d\n", 0x1234, 1234);
+    return 0;
 }
 
 /* -------------------------------- */

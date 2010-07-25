@@ -101,7 +101,7 @@ int printf(const char *format, ...)
     return ret;
 }
 
-void entry()
+void main()
 {
     int a, b, c, i, sum = 0;
     printf("%s, %s%c\n", "Hello", "World", '!');
@@ -111,5 +111,5 @@ void entry()
     printf("%d + %d = %d\n", a, b, c);
     printf("&a: %p, &b: %p, &c: %p\n", &a, &b, &c);
     for (i = 1; i <= 10000; i++) sum += i;
-    printf("1 + 2 + ... + 9999 + 10000 = %d", sum);
+    printf("1 + 2 + ... + 9999 + 10000 = %d\n", sum);
 }

@@ -5,7 +5,7 @@ void printstr(char *s)
     for (; *s; s++) fputc(*s, 0);
 }
 
-void entry()
+void main()
 {
-    printstr("Hello, World!");
+    printstr("Hello, World!\n");
 }

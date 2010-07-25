@@ -69,7 +69,7 @@ namespace WinForms
             }
             
             sw = sw3;
-            Alpha.Exec.exec(vm, elf, sw);
+            Alpha.Exec.exec(vm, elf, sw, array [ Path.GetFileName(fn) ]);
         }
         catch {
             | ex => sw.WriteLine(ex.Message);

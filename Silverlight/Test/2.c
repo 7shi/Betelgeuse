@@ -1,6 +1,6 @@
 int (*fputc)(int, void *) = (void *)0x00ef0004;
 
-void entry()
+void main()
 {
     fputc('H', 0);
     fputc('e', 0);
@@ -15,4 +15,5 @@ void entry()
     fputc('l', 0);
     fputc('d', 0);
     fputc('!', 0);
+    fputc('\n', 0);
 }

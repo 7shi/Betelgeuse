@@ -1,6 +1,6 @@
 int (*fputc)(int, void *) = (void *)0x00ef0004;
 
-void entry()
+void main()
 {
     fputc('!', 0);
 }
