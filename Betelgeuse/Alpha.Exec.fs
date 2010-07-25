@@ -181,10 +181,10 @@ let exec vm (elf:ELF64) (tw:TextWriter) =
 
     tw.WriteLine("pc={0:x16}: 開始", vm.pc)
     while (vm.pc <> stackEnd) do
-        if funcStart <= vm.pc && vm.pc < funcEnd then
-            callFunc vm
-        else if start <= vm.pc && vm.pc < end' then
+        if start <= vm.pc && vm.pc < end' then
             execStep vm
+        else if funcStart <= vm.pc && vm.pc < funcEnd then
+            callFunc vm
         else
             vm.pc <- vm.pc + 4UL
             raise << vm.Abort <| "不正な実行アドレス"
