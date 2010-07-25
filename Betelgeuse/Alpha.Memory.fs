@@ -1,7 +1,9 @@
 ﻿module Alpha.Memory
 
 open System
+open System.Collections.Generic
 open System.IO
+open System.Text
 
 open ELF
 open Alpha
@@ -71,3 +73,12 @@ let read16 vm addr =
 let read8 vm addr =
     let mp = getPtr vm addr 1
     mp.buf.[mp.ptr]
+
+let readString vm addr =
+    let mp = getPtr vm addr 1
+    let rec read p =
+        if mp.buf.[mp.ptr + p] = 0uy then p else read(p + 1)
+    let len = read 0
+    let bytes = Array.zeroCreate<byte> len
+    array.Copy(mp.buf, mp.ptr, bytes, 0, len)
+    Encoding.UTF8.GetString(bytes, 0, bytes.Length)

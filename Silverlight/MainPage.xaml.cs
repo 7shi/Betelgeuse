@@ -30,6 +30,34 @@ namespace Betelgeuse
             new WheelObserver(textBox2);
             new WheelObserver(textBox3);
             new WheelObserver(textBox4);
+
+            Alpha.Syscall.openRead = OpenRead;
+            Alpha.Syscall.openWrite = OpenWrite;
+        }
+
+        Dictionary<string, byte[]> files = new Dictionary<string, byte[]>();
+
+        public Stream OpenRead(string fn)
+        {
+            if (files.ContainsKey(fn))
+                return new MemoryStream(files[fn]);
+            var uri = new Uri("Test/" + fn, UriKind.Relative);
+            return Application.GetResourceStream(uri).Stream;
+        }
+
+        public Stream OpenWrite(string fn)
+        {
+            return new MemoryStream();
+        }
+
+        public void CloseFile(string fn, Stream s, int attr)
+        {
+            if ((attr & Alpha.Syscall.aWrite) != 0)
+            {
+                var ms = s as MemoryStream;
+                if (ms != null) files[fn] = ms.ToArray();
+            }
+            s.Dispose();
         }
 
         public void Write(string format, params object[] args)
@@ -124,12 +152,11 @@ namespace Betelgeuse
             textBox1.Text = textBox2.Text = textBox3.Text = textBox4.Text = "";
             try
             {
-                var uri1 = new Uri("Test/" + t, UriKind.Relative);
-                using (var s = Application.GetResourceStream(uri1).Stream)
+                var tt = t.ToString();
+                using (var s = OpenRead(tt))
                     ReadElf(t.ToString(), s);
                 tb = textBox3;
-                var uri2 = new Uri("Test/" + t + ".c", UriKind.Relative);
-                using (var s = Application.GetResourceStream(uri2).Stream)
+                using (var s = OpenRead(tt + ".c"))
                 using (var sr = new StreamReader(s))
                     textBox3.Text = sr.ReadToEnd();
             }

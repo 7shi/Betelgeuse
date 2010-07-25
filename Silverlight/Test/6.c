@@ -14,7 +14,7 @@ FILE *(*fopen)(const char *, const char *) = (void *)0x00ef000c;
 int (*fclose)(FILE *) = (void *)0x00ef0010;
 int (*fread)(void *, int, int, FILE *) = (void *)0x00ef0014;
 int (*fwrite)(const void *, int, int, FILE *) = (void *)0x00ef0018;
-int (*fseek)(FILE *, int, int) = (void *)0x00ef001c;
+int (*fseek)(FILE *, long, int) = (void *)0x00ef001c;
 
 int printf(const char *, ...);
 int fprintf(FILE *, const char *, ...);
@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
 {
     int i;
     char buf[16];
+    FILE *f;
     for (i = 0; i < argc; i++)
         printf("argv[%d] = \"%s\"\n", i, argv[i]);
     memset(buf, 'a', 4);
@@ -43,6 +44,15 @@ int main(int argc, char *argv[])
     printf("%d\n", strcmp("a", "ab"));
     printf("%d\n", strcmp("ab", "a"));
     printf("%08x %8d\n", 0x1234, 1234);
+    printf("*** 1.c ***\n");
+    f = fopen("1.c", "r");
+    if (f)
+    {
+        int ch;
+        while ((ch = fgetc(f)) != -1)
+            printf("%c", (char)ch);
+        fclose(f);
+    }
     return 0;
 }
 
@@ -131,7 +141,7 @@ int parseint(const char **p)
     return ret;
 }
 
-int vfsnprintf(FILE *f, char **sb, int *len, const char *format, void **arg)
+int vfsnprintf(FILE *f, char **sb, int *len, const char *format, void **args)
 {
     const char *p = format, *pp;
     int ret = 0, n, pad;
@@ -148,21 +158,21 @@ int vfsnprintf(FILE *f, char **sb, int *len, const char *format, void **arg)
                 p--;
                 break;
             case 'd':
-                ret += fsnprintlong(*(int *)(arg++), 0, '0', f, sb, len);
+                ret += fsnprintlong(*(int *)(args++), 0, '0', f, sb, len);
                 break;
             case 'x':
-                ret += fsnprinthex(*(int *)(arg++), 0, '0', f, sb, len);
+                ret += fsnprinthex(*(int *)(args++), 0, '0', f, sb, len);
                 break;
             case 'p':
                 fsnprintstr("0x", f, sb, len);
-                ret += fsnprinthex(*(int *)(arg++), 16, '0', f, sb, len) + 2;
+                ret += fsnprinthex(*(int *)(args++), 16, '0', f, sb, len) + 2;
                 break;
             case 'c':
-                fsnputc(*(char *)(arg++), f, sb, len);
+                fsnputc(*(char *)(args++), f, sb, len);
                 ret++;
                 break;
             case 's':
-                ret += fsnprintstr(*(const char **)(arg++), f, sb, len);
+                ret += fsnprintstr(*(const char **)(args++), f, sb, len);
                 break;
             case '%':
                 fsnputc('%', f, sb, len);
@@ -183,10 +193,10 @@ int vfsnprintf(FILE *f, char **sb, int *len, const char *format, void **arg)
                 switch (*p)
                 {
                 case 'd':
-                    ret += fsnprintlong(*(int *)(arg++), n, pad, f, sb, len);
+                    ret += fsnprintlong(*(int *)(args++), n, pad, f, sb, len);
                     break;
                 case 'x':
-                    ret += fsnprinthex(*(int *)(arg++), n, pad, f, sb, len);
+                    ret += fsnprinthex(*(int *)(args++), n, pad, f, sb, len);
                     break;
                 default:
                     for (; pp <= p; pp++, ret++) fsnputc(*pp, f, sb, len);

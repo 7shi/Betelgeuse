@@ -172,8 +172,8 @@ let exec vm (elf:ELF64) (tw:TextWriter) (args:string[]) =
     array.Clear(vm.reg, 0, vm.reg.Length)
     array.Clear(vm.frg, 0, vm.frg.Length)
     
-    let argb = [ for arg in args -> Encoding.UTF8.GetBytes(arg) ]
-    let mutable pargs = ((stackSize |> int) - List.sum([ for arg in argb -> argb.Length])) >>> 3 <<< 3
+    let argb = [for arg in args -> Encoding.UTF8.GetBytes(arg)]
+    let mutable pargs = ((stackSize |> int) - List.sum([for arg in argb -> argb.Length])) >>> 3 <<< 3
     let pargv = pargs - args.Length * 8
     for i = 0 to args.Length - 1 do
         array.Copy(BitConverter.GetBytes(stackStart + (pargs |> uint64)), 0, vm.stack, pargv + i * 8, 8)
