@@ -14,72 +14,72 @@ using System.Windows.Forms;
 
 namespace WinForms
 {
-  /// <summary>
-  /// Description of MainForm.
-  /// </summary>
-  public partial class MainForm : Form
-  {
-    public this()
+    /// <summary>
+    /// Description of MainForm.
+    /// </summary>
+    public partial class MainForm : Form
     {
-      InitializeComponent();
-      
-      def mono = Font(FontFamily.GenericMonospace, Font.Size);
-      textBox1.Font = mono;
-      textBox2.Font = mono;
-      textBox3.Font = mono;
-    }
-  
-    private menuItem1_Click (_ : object,  _ : System.EventArgs) : void
-    {
-        when (openFileDialog1.ShowDialog(this) == DialogResult.OK)
-            open(openFileDialog1.FileName);
-    }
-    
-    private open(fn : string) : void
-    {
-        mutable fs : FileStream = null;
-        def sw1 = StringWriter();
-        def sw2 = StringWriter();
-        def sw3 = StringWriter();
-        mutable sw = sw1;
-        try
+        public this()
         {
-            fs = FileStream(fn, FileMode.Open);
-            def data : array[byte] = array(fs.Length :> int);
-            _ = fs.Read(data, 0, data.Length);
-            fs.Dispose();
-            fs = null;
-            
-            def br = BinaryReader(MemoryStream(data));
-            def elf = ELF.ELF64.Read(sw, br);
-            
-            sw = sw2;
-            def vm = Alpha.Memory.createVM(elf, data);
-            def text = elf.Text;
-            mutable addr = text.sh_addr;
-            def end = addr + text.sh_size;
-            mutable off = text.sh_offset;
-            for (; addr < end; { addr += 4; off += 4; })
+            InitializeComponent();
+
+            def mono = Font(FontFamily.GenericMonospace, Font.Size);
+            textBox1.Font = mono;
+            textBox2.Font = mono;
+            textBox3.Font = mono;
+        }
+
+        private menuItem1_Click (_ : object,  _ : System.EventArgs) : void
+        {
+            when (openFileDialog1.ShowDialog(this) == DialogResult.OK)
+                open(openFileDialog1.FileName);
+        }
+
+        private open(fn : string) : void
+        {
+            mutable fs : FileStream = null;
+            def sw1 = StringWriter();
+            def sw2 = StringWriter();
+            def sw3 = StringWriter();
+            mutable sw = sw1;
+            try
             {
-                sw.Write("{0:x8}: ", off);
-                when (off != addr) sw.Write("[{0:x8}] ", addr);
-                def code = Alpha.Memory.read32(vm, addr);
-                _ = Alpha.Disassemble.disassemble(sw, addr, code);
-                sw.WriteLine();
+                fs = FileStream(fn, FileMode.Open);
+                def data : array[byte] = array(fs.Length :> int);
+                _ = fs.Read(data, 0, data.Length);
+                fs.Dispose();
+                fs = null;
+                
+                def br = BinaryReader(MemoryStream(data));
+                def elf = ELF.ELF64.Read(sw, br);
+                
+                sw = sw2;
+                def vm = Alpha.Memory.createVM(elf, data);
+                def text = elf.Text;
+                mutable addr = text.sh_addr;
+                def end = addr + text.sh_size;
+                mutable off = text.sh_offset;
+                for (; addr < end; { addr += 4; off += 4; })
+                {
+                    sw.Write("{0:x8}: ", off);
+                    when (off != addr) sw.Write("[{0:x8}] ", addr);
+                    def code = Alpha.Memory.read32(vm, addr);
+                    _ = Alpha.Disassemble.disassemble(sw, addr, code);
+                    sw.WriteLine();
+                }
+                
+                sw = sw3;
+                Alpha.Exec.exec(vm, elf, sw, array [ Path.GetFileName(fn) ]);
             }
-            
-            sw = sw3;
-            Alpha.Exec.exec(vm, elf, sw, array [ Path.GetFileName(fn) ]);
+            catch {
+                | ex => sw.WriteLine(ex.Message);
+            }
+            finally {
+                when (fs != null) fs.Dispose();
+            }
+            textBox1.Text = sw1.ToString();
+            textBox2.Text = sw2.ToString();
+            textBox3.Text = sw3.ToString();
         }
-        catch {
-            | ex => sw.WriteLine(ex.Message);
-        }
-        finally {
-            when (fs != null) fs.Dispose();
-        }
-        textBox1.Text = sw1.ToString();
-        textBox2.Text = sw2.ToString();
-        textBox3.Text = sw3.ToString();
     }
-  }
 }
