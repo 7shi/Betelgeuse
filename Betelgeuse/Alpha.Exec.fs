@@ -89,8 +89,8 @@ let execStep vm =
             | Op.Xor    -> reg.[rc] <- va ^^^ vb
             | Op.Ornot  -> reg.[rc] <- va ||| ~~~vb
             | Op.Eqv    -> reg.[rc] <- va ^^^ ~~~vb
-            | Op.Zap    -> reg.[rc] <- va &&& mask.[int(vb) &&& 255]
-            | Op.Zapnot -> reg.[rc] <- va &&& ~~~mask.[int(vb) &&& 255]
+            | Op.Zap    -> reg.[rc] <- va &&& ~~~mask.[int(vb) &&& 255]
+            | Op.Zapnot -> reg.[rc] <- va &&& mask.[int(vb) &&& 255]
             | Op.Addq   -> reg.[rc] <- va + vb
             | Op.Subq   -> reg.[rc] <- va - vb
             | Op.Mulq   -> reg.[rc] <- (uint64)((int64)va * (int64)vb)
