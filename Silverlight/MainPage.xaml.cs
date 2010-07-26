@@ -33,6 +33,7 @@ namespace Betelgeuse
 
             Alpha.Syscall.openRead = OpenRead;
             Alpha.Syscall.openWrite = OpenWrite;
+            Alpha.Syscall.closeFile = CloseFile;
         }
 
         Dictionary<string, byte[]> files = new Dictionary<string, byte[]>();
