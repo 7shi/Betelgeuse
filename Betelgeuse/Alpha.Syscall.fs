@@ -47,7 +47,7 @@ let callFunc (vm:VM) =
     let func = int(vm.pc - funcStart) >>> 2
     match func |> enum<Funcs> with
     | Funcs.Exit ->
-        vm.pc <- stackStart
+        vm.pc <- stackEnd
     | Funcs.FPutC ->
         vm.pc <- vm.reg.[Regs.RA |> int]
         let c = vm.reg.[Regs.A0 |> int] |> char
