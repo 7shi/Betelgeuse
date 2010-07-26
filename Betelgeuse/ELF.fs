@@ -64,7 +64,7 @@ type Shdr64 =
           sh_offset = 0UL; sh_size = 0UL; sh_link = 0u; sh_info = 0u
           sh_addralign = 0UL; sh_entsize = 0UL; Name = "" }
     
-    member x.IsZero = x.sh_name = 0u
+    member x.IsZero = x.sh_addr = 0UL
     
     static member Read tw br (stroff:uint64) =
         let n1, n2 = readUInt32WithString tw br "sh_name" stroff

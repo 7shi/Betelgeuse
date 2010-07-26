@@ -25,9 +25,10 @@ let createVM (elf:ELF64) (data:byte[]) =
           memoryEnd   = elf.End
           out         = new StringWriter() }
     for sh in elf.Headers do
-        array.Copy(data, sh.sh_offset |> int,
-                   vm.memory, (sh.sh_addr - vm.memoryStart) |> int,
-                   sh.sh_size |> int)
+        if (sh.sh_type &&& 1u) <> 0u then
+            array.Copy(data, sh.sh_offset |> int,
+                       vm.memory, (sh.sh_addr - vm.memoryStart) |> int,
+                       sh.sh_size |> int)
     vm
 
 let getPtr (vm:VM) (addr:uint64) (size:int) =
