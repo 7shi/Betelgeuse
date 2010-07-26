@@ -12,8 +12,8 @@ int (*fputc)(int, FILE *) = (void *)0x00ef0004;
 int (*fgetc)(FILE *) = (void *)0x00ef0008;
 FILE *(*fopen)(const char *, const char *) = (void *)0x00ef000c;
 int (*fclose)(FILE *) = (void *)0x00ef0010;
-int (*fread)(void *, int, int, FILE *) = (void *)0x00ef0014;
-int (*fwrite)(const void *, int, int, FILE *) = (void *)0x00ef0018;
+int (*fwrite)(const void *, int, int, FILE *) = (void *)0x00ef0014;
+int (*fread)(void *, int, int, FILE *) = (void *)0x00ef0018;
 int (*fseek)(FILE *, long, int) = (void *)0x00ef001c;
 
 int printf(const char *, ...);
