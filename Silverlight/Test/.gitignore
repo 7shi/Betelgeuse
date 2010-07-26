@@ -1,1 +1,4 @@
 test.*
+*.bin
+*.asm
+*.out
