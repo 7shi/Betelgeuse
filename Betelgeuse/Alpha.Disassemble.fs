@@ -113,17 +113,15 @@ let disassemble (tw:TextWriter) (addr:uint64) (code:uint32) =
         let ra = int(code >>> 21) &&& 31
         let rb = int(code >>> 16) &&& 31
         let disp = int(code &&& 0xffffu)
-        let args = if disp < 0x8000
-                   then String.Format("{0:x}({1})", disp, regname.[rb])
-                   else String.Format("-{0:x}({1})", 0x10000 - disp, regname.[rb])
+        let disp2 = if disp < 0x8000
+                    then String.Format("{0:x}", disp)
+                    else String.Format("-{0:x}", 0x10000 - disp)
+        let args = if rb = 31 then disp2 else disp2 + "(" + regname.[rb] + ")"
+                   
         tw.Write("      r{0:00} r{1:00} {2:x4}", ra, rb, disp)
         tw.Write(" => {0,-7} {1},", mne, regname.[ra])
         tw.Write(args)
-        if rb = 31 && op = Op.Lda then
-            tw.Write(" => mov {0:x},{1}", disp, regname.[ra])
-        else if rb = 31 && op = Op.Ldah then
-            tw.Write(" => mov {0:x}0000,{1}", disp, regname.[ra])
-        else if ra = 31 then
+        if ra = 31 then
             if disp = 0 && op = Op.Ldq_u then
                 tw.Write(" => unop")
             else
