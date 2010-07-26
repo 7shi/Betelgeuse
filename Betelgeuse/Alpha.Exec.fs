@@ -57,9 +57,9 @@ let execStep vm =
             | Op.Ldah  -> reg.[ra] <- vb + (disp <<< 16)
             | Op.Ldq   -> reg.[ra] <- read64 vm (vb + disp)
             | Op.Ldq_u -> reg.[ra] <- read64 vm ((vb + disp) &&& ~~~7UL)
-            | Op.Ldl   -> reg.[ra] <- uint64 << int   <| read32 vm (vb + disp)
-            | Op.Ldwu  -> reg.[ra] <- uint64 << int16 <| read16 vm (vb + disp)
-            | Op.Ldbu  -> reg.[ra] <- uint64 << sbyte <| read8  vm (vb + disp)
+            | Op.Ldl   -> reg.[ra] <- uint64 << int <| read32 vm (vb + disp)
+            | Op.Ldwu  -> reg.[ra] <- uint64        <| read16 vm (vb + disp)
+            | Op.Ldbu  -> reg.[ra] <- uint64        <| read8  vm (vb + disp)
             | _ -> ()
     | Format.Mbr ->
         let ra = int(code >>> 21) &&& 31
