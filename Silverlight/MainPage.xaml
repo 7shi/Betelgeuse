@@ -14,8 +14,8 @@
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*" />
-            <ColumnDefinition Width="4*" />
-            <ColumnDefinition Width="1*" />
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="3*" />
         </Grid.ColumnDefinitions>
         <Grid Grid.ColumnSpan="3">
             <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
@@ -28,6 +28,11 @@
                 <Button Content="Test4" Name="btnTest4" Click="btnTest_Click" />
                 <Button Content="Test5" Name="btnTest5" Click="btnTest_Click" />
                 <Button Content="Test6" Name="btnTest6" Click="btnTest_Click" />
+                <Grid Width="4" />
+                <ComboBox Name="comboBox1" SelectedIndex="0">
+                    <ComboBoxItem Content="外部逆ASM" />
+                    <ComboBoxItem Content="内蔵逆ASM" />
+                </ComboBox>
             </StackPanel>
             <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0">
                 Betelgeuse - Alpha Orionis

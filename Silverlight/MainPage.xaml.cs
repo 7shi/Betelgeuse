@@ -68,7 +68,7 @@ namespace Betelgeuse
 
         private byte[] data;
 
-        private void ReadElf(string fn, Stream s)
+        private void ReadElf(string[] args, Stream s, bool silent = false)
         {
             var sw1 = new StringWriter();
             var sw2 = new StringWriter();
@@ -90,31 +90,49 @@ namespace Betelgeuse
                 if (elf.e_machine != ELF.EM_ALPHA_EXP)
                     throw new Exception("Alpha以外はサポートされていません。");
                 var vm = Alpha.Memory.createVM(elf, data);
-                var text = elf.Text;
-                var addr = text.sh_addr;
-                var end = addr + text.sh_size;
-                var off = text.sh_offset;
-                for (; addr < end; addr += 4, off += 4)
+                if (!silent)
                 {
-                    sw.Write("{0:x8}: ", off);
-                    if (off != addr) sw.Write("[{0:x9}] ", addr);
-                    var code = Alpha.Memory.read32(vm, addr);
-                    Alpha.Disassemble.disassemble(sw, addr, code);
-                    sw.WriteLine();
+                    if (comboBox1.SelectedIndex == 0)
+                    {
+                        using (var _7d = OpenRead("7d"))
+                            ReadElf(new[] { "7d", args[0] }, _7d, true);
+                        using (var asm = OpenRead(args[0] + ".asm"))
+                        using (var sr = new StreamReader(asm))
+                            textBox2.Text = sr.ReadToEnd();
+                        sw2 = null;
+                    }
+                    else
+                    {
+                        var text = elf.Text;
+                        var addr = text.sh_addr;
+                        var end = addr + text.sh_size;
+                        var off = text.sh_offset;
+                        for (; addr < end; addr += 4, off += 4)
+                        {
+                            sw.Write("{0:x8}: ", off);
+                            if (off != addr) sw.Write("[{0:x9}] ", addr);
+                            var code = Alpha.Memory.read32(vm, addr);
+                            Alpha.Disassemble.disassemble(sw, addr, code);
+                            sw.WriteLine();
+                        }
+                    }
                 }
 
                 sw = sw3;
                 msg = "実行に失敗しました。";
-                Alpha.Exec.exec(vm, elf, sw, new[] { Path.GetFileName(fn) });
+                Alpha.Exec.exec(vm, elf, sw, args);
             }
             catch (Exception ex)
             {
                 sw.WriteLine(ex.Message);
                 sw.WriteLine(msg);
             }
-            textBox1.Text = sw1.ToString();
-            textBox2.Text = sw2.ToString();
-            textBox4.Text = sw3.ToString();
+            if (!silent)
+            {
+                textBox1.Text = sw1.ToString();
+                if (sw2 != null) textBox2.Text = sw2.ToString();
+                textBox4.Text = sw3.ToString();
+            }
         }
 
         private void btnOpen_Click(object sender, RoutedEventArgs e)
@@ -129,7 +147,7 @@ namespace Betelgeuse
                 if (fi.Length > 200 * 1024)
                     throw new Exception("ファイルが大き過ぎます。上限は200KBです。");
                 using (var fs = ofd.File.OpenRead())
-                    ReadElf(fi.Name, fs);
+                    ReadElf(new[] { fi.Name }, fs);
             }
             catch (Exception ex)
             {
@@ -155,7 +173,7 @@ namespace Betelgeuse
             {
                 var tt = t.ToString();
                 using (var s = OpenRead(tt))
-                    ReadElf(t.ToString(), s);
+                    ReadElf(new[] { t.ToString() }, s);
                 tb = textBox3;
                 using (var s = OpenRead(tt + ".c"))
                 using (var sr = new StreamReader(s))
