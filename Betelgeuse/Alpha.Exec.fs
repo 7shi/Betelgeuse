@@ -193,8 +193,9 @@ let exec vm (elf:ELF64) (tw:TextWriter) (args:string[]) =
     vm.reg.[Regs.T12 |> int] <- elf.e_entry // t12 for gp
 
     tw.WriteLine("pc={0:x16}: 開始", vm.pc)
+    let startTime = DateTime.Now
     
-    while (vm.pc <> stackEnd) do
+    while vm.pc <> stackEnd do
         if start <= vm.pc && vm.pc < end' then
             execStep vm
         else if funcStart <= vm.pc && vm.pc < funcEnd then
@@ -204,4 +205,4 @@ let exec vm (elf:ELF64) (tw:TextWriter) (args:string[]) =
             raise << vm.Abort <| "不正な実行アドレス"
 
     tw.WriteLine("---")
-    tw.WriteLine("完了しました。")
+    tw.WriteLine("完了しました: {0:0.00}s", (DateTime.Now - startTime).TotalSeconds)
