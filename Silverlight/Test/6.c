@@ -19,12 +19,11 @@ int (*printf)(const char *, ...) = (void *)0x00ef0020;
 int (*fprintf)(FILE *, const char *, ...) = (void *)0x00ef0024;
 int (*snprintf)(char *, size_t, const char *, ...) = (void *)0x00ef0028;
 int (*strcmp)(const char *, const char *) = (void *)0x00ef002c;
-char (*strncpy)(char *, const char *, size_t) = (void *)0x00ef0030;
-char (*strncat)(char *, const char *, size_t) = (void *)0x00ef0034;
+char *(*strncpy)(char *, const char *, size_t) = (void *)0x00ef0030;
+char *(*strncat)(char *, const char *, size_t) = (void *)0x00ef0034;
 size_t (*strlen)(const char *) = (void *)0x00ef0038;
-
-void *memcpy(void *, const void *, size_t);
-void *memset(void *, int, size_t);
+void *(*memcpy)(void *, const void *, size_t) = (void *)0x00ef003c;
+void *(*memset)(void *, int, size_t) = (void *)0x00ef0040;
 
 /* -------------------------------- */
 
@@ -59,23 +58,4 @@ int main(int argc, char *argv[])
         fclose(f);
     }
     return 0;
-}
-
-/* libc implementation */
-
-void *memcpy(void *dst, const void *src, size_t size)
-{
-    char *d = (char *)dst;
-    const char *s = (const char *)src;
-    for (; size > 0; size--, d++, s++)
-        *d = *s;
-    return dst;
-}
-
-void *memset(void *dst, int c, size_t len)
-{
-    char *d = (char *)dst;
-    int i;
-    for (i = 0; i < len; i++, d++) *d = (char)c;
-    return dst;
 }

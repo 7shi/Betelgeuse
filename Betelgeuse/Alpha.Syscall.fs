@@ -334,6 +334,19 @@ let strlen (vm:VM) =
         if mp.buf.[mp.ptr + i] = 0uy then i else len (i + 1)
     vm.v0 <- uint64 <| len 0
 
+let memcpy (vm:VM) =
+    let mp1 = getPtr vm vm.a0 1
+    let mp2 = getPtr vm vm.a1 1
+    array.Copy(mp2.buf, mp2.ptr, mp1.buf, mp1.ptr, int vm.a2);
+    vm.v0 <- vm.a0
+
+let memset (vm:VM) =
+    let mp = getPtr vm vm.a0 1
+    let b = vm.a1 |> byte
+    let len = (vm.a2 |> int) - 1
+    for i = 0 to len do mp.buf.[mp.ptr + i] <- b
+    vm.v0 <- vm.a0
+
 let funcs =
     [| exit
        fputc
@@ -349,7 +362,9 @@ let funcs =
        strcmp
        strncpy
        strncat
-       strlen |]
+       strlen
+       memcpy
+       memset |]
 
 let funcStart = 0x00ef0000UL
 let funcEnd = funcStart + uint64(funcs.Length * 4)
