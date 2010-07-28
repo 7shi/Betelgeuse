@@ -119,7 +119,8 @@ let disassemble (tw:TextWriter) (addr:uint64) (code:uint32) =
         let args = if rb = 31 then disp2 else disp2 + "(" + regname.[rb] + ")"
                    
         tw.Write("      r{0:00} r{1:00} {2:x4}", ra, rb, disp)
-        tw.Write(" => {0,-7} {1},", mne, regname.[ra])
+        tw.Write(" => {0,-7} {1},", mne,
+            if op = Op.Ldt || op = Op.Stt then "f" + ra.ToString() else regname.[ra])
         tw.Write(args)
         if ra = 31 then
             if disp = 0 && op = Op.Ldq_u then
