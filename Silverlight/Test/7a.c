@@ -22,8 +22,8 @@ int (*fseek)(FILE *, long, int) = (void *)0x00ef001c;
 int (*printf)(const char *, ...) = (void *)0x00ef0020;
 int (*fprintf)(FILE *, const char *, ...) = (void *)0x00ef0024;
 int (*snprintf)(char *, size_t, const char *, ...) = (void *)0x00ef0028;
+int (*strcmp)(const char *, const char *) = (void *)0x00ef002c;
 
-int strcmp(const char *, const char *);
 char *strncpy(char *, const char *, size_t);
 char *strncat(char *, const char *, size_t);
 size_t strlen(const char *);
@@ -1650,15 +1650,6 @@ int main(int argc, char *argv[])
 /* libc implementation */
 
 #ifdef __alpha
-int strcmp(const char *a, const char *b)
-{
-    for (; *a || *b; a++, b++)
-    {
-        if (*a < *b) return -1; else if (*a > *b) return 1;
-    }
-    return 0;
-}
-
 char *strncpy(char *dst, const char *src, size_t size)
 {
     for (; size > 0; size--, dst++, src++)

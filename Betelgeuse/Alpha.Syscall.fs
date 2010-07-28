@@ -292,6 +292,17 @@ let snprintf (vm:VM) =
     let plen = [| vm.a1 |]
     vm.v0 <- _vfsnprintf vm 0 psb plen vm.a2 [| vm.a3; vm.a4; vm.a5 |] 2
 
+let strcmp (vm:VM) =
+    vm.v0 <- 
+        let rec cmp a b =
+            let va = read8 vm a
+            let vb = read8 vm b
+            if va = 0uy && vb = 0uy then 0
+            else if va < vb then -1
+            else if va > vb then 1
+            else cmp (a + 1UL) (b + 1UL)
+        cmp vm.a0 vm.a1 |> uint64
+
 let funcs =
     [| exit
        fputc
@@ -303,7 +314,8 @@ let funcs =
        fseek
        printf
        fprintf
-       snprintf |]
+       snprintf
+       strcmp |]
 
 let funcStart = 0x00ef0000UL
 let funcEnd = funcStart + uint64(funcs.Length * 4)
