@@ -170,26 +170,26 @@ let fseek (vm:VM) =
                     1UL
             with _ -> 1UL
 
-let _fsnputc (vm:VM) (ch:byte) (f:int) (psb:uint64[]) (plen:uint64[]) =
-    if psb = null then
+let _fsnputc vm (ch:byte) (f:int) (sb:byte[]) (sp:int[]) =
+    if sp = null then
         _fputc vm ch f |> ignore
         1
     else
-        let len = plen.[0]
-        if len = 0UL then 0
+        let len = sp.[1]
+        if len = 0 then 0
         else
-            plen.[0] <- len - 1UL
-            let sb = psb.[0]
-            psb.[0] <- sb + 1UL
-            if len = 1UL then
-                write8 vm sb 0uy
+            let p = sp.[0]
+            sp.[0] <- p + 1
+            sp.[1] <- len - 1
+            if len = 1 then
+                sb.[p] <- 0uy
                 0
             else
-                write8 vm sb ch
+                sb.[p] <- ch
                 1
 
-let _fsnprintstr (vm:VM) (buf:byte[]) (ptr:int) (f:int) (psb:uint64[]) (plen:uint64[]) =
-    if f = 0 && psb = null then
+let _fsnprintstr vm (buf:byte[]) (ptr:int) f sb sp =
+    if f = 0 && sb = null then
         let rec count p =
             if buf.[ptr + p] = 0uy then p else count (p + 1)
         let len = count 0
@@ -198,11 +198,11 @@ let _fsnprintstr (vm:VM) (buf:byte[]) (ptr:int) (f:int) (psb:uint64[]) (plen:uin
     else
         let rec write p =
             let ch = buf.[ptr + p]
-            if ch = 0uy || (_fsnputc vm ch f psb plen) = 0 then p
+            if ch = 0uy || (_fsnputc vm ch f sb sp) = 0 then p
             else write (p + 1)
         write 0
 
-let _fsnprintlong (vm:VM) (v:int64) (w:int) (zero:bool) (f:int) (psb:uint64[]) (plen:uint64[]) =
+let _fsnprintlong vm (v:int64) (w:int) (zero:bool) f sb sp =
     let str =
         if w = 0 then
             v.ToString()
@@ -211,9 +211,9 @@ let _fsnprintlong (vm:VM) (v:int64) (w:int) (zero:bool) (f:int) (psb:uint64[]) (
         else
             String.Format("{0," + w.ToString() + "}", v)
     let buf = Encoding.UTF8.GetBytes(str + "\u0000")
-    _fsnprintstr vm buf 0 f psb plen
+    _fsnprintstr vm buf 0 f sb sp
 
-let _fsnprinthex (vm:VM) (v:uint64) (w:int) (zero:bool) (f:int) (psb:uint64[]) (plen:uint64[]) =
+let _fsnprinthex vm (v:uint64) (w:int) (zero:bool) f sb sp =
     let str =
         if w = 0 then
             v.ToString("x")
@@ -222,7 +222,7 @@ let _fsnprinthex (vm:VM) (v:uint64) (w:int) (zero:bool) (f:int) (psb:uint64[]) (
         else
             String.Format("{0," + w.ToString() + ":x}", v)
     let buf = Encoding.UTF8.GetBytes(str + "\u0000")
-    _fsnprintstr vm buf 0 f psb plen
+    _fsnprintstr vm buf 0 f sb sp
 
 let _parseint (buf:byte[]) (ptr:int) =
     let rec parse b p =
@@ -231,7 +231,7 @@ let _parseint (buf:byte[]) (ptr:int) =
         else parse (b * 10 + int(ch - byte('0'))) (p + 1)
     parse 0 0
 
-let _vfsnprintf (vm:VM) (f:int) (psb:uint64[]) (plen:uint64[]) (format:uint64) (args:uint64[]) =
+let _vfsnprintf vm f sb sp (format:uint64) (args:uint64[]) =
     let get_arg n =
         if n < args.Length then args.[n] else read64 vm (vm.sp + uint64((n - args.Length) * 8))
     let mp = getPtr vm format 1
@@ -240,25 +240,25 @@ let _vfsnprintf (vm:VM) (f:int) (psb:uint64[]) (plen:uint64[]) (format:uint64) (
         let da, dp, dl =
             match ch |> char with
             | '\u0000' ->
-                if psb <> null then _fsnputc vm ch f psb plen |> ignore
+                if sb <> null then _fsnputc vm ch f sb sp |> ignore
                 0, 0, 0
             | '%' ->
                 let ch2 = mp.buf.[mp.ptr + p + 1]
                 match ch2 |> char with
                 | 'd' ->
-                    1, 2, _fsnprintlong vm (int64 (get_arg arg)) 0 false f psb plen
+                    1, 2, _fsnprintlong vm (int64 (get_arg arg)) 0 false f sb sp
                 | 'x' ->
-                    1, 2, _fsnprinthex vm (get_arg arg) 0 false f psb plen
+                    1, 2, _fsnprinthex vm (get_arg arg) 0 false f sb sp
                 | 'p' ->
-                    1, 2, (_fsnprintstr vm [| byte('0'); byte('x'); 0uy |] 0 f psb plen) +
-                          (_fsnprinthex vm (get_arg arg) 16 true f psb plen)
+                    1, 2, (_fsnprintstr vm [| byte('0'); byte('x'); 0uy |] 0 f sb sp) +
+                          (_fsnprinthex vm (get_arg arg) 16 true f sb sp)
                 | 'c' ->
-                    1, 2, _fsnputc vm (byte (get_arg arg)) f psb plen
+                    1, 2, _fsnputc vm (byte (get_arg arg)) f sb sp
                 | 's' ->
                     let mp = getPtr vm (get_arg arg) 1
-                    1, 2, _fsnprintstr vm mp.buf mp.ptr f psb plen
+                    1, 2, _fsnprintstr vm mp.buf mp.ptr f sb sp
                 | '%' ->
-                    _fsnputc vm ch f psb plen |> ignore
+                    _fsnputc vm ch f sb sp |> ignore
                     0, 2, 1
                 | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' ->
                     let zero = ch2 = byte('0')
@@ -266,17 +266,17 @@ let _vfsnprintf (vm:VM) (f:int) (psb:uint64[]) (plen:uint64[]) (format:uint64) (
                     let ch3 = mp.buf.[mp.ptr + p + 1 + wlen]
                     match ch3 |> char with
                     | 'd' ->
-                        1, 2 + wlen, _fsnprintlong vm (int64 (get_arg arg)) w zero f psb plen
+                        1, 2 + wlen, _fsnprintlong vm (int64 (get_arg arg)) w zero f sb sp
                     | 'x' ->
-                        1, 2 + wlen, _fsnprinthex vm (get_arg arg) w zero f psb plen
+                        1, 2 + wlen, _fsnprinthex vm (get_arg arg) w zero f sb sp
                     | _ ->
-                        _fsnputc vm ch f psb plen |> ignore
+                        _fsnputc vm ch f sb sp |> ignore
                         0, 1, 1
                 | _ ->
-                    _fsnputc vm ch f psb plen |> ignore
+                    _fsnputc vm ch f sb sp |> ignore
                     0, 1, 1
             | _ ->
-                _fsnputc vm ch f psb plen |> ignore
+                _fsnputc vm ch f sb sp |> ignore
                 0, 1, 1
         if dl = 0 then len else write (len + dl) (p + dp) (arg + da)
     write 0 0 0 |> uint64
@@ -288,20 +288,22 @@ let fprintf (vm:VM) =
     vm.v0 <- _vfsnprintf vm (int vm.a0) null null vm.a1 [| vm.a2; vm.a3; vm.a4; vm.a5 |]
 
 let snprintf (vm:VM) =
-    let psb = [| vm.a0 |]
-    let plen = [| vm.a1 |]
-    vm.v0 <- _vfsnprintf vm 0 psb plen vm.a2 [| vm.a3; vm.a4; vm.a5 |]
+    let mp = getPtr vm vm.a0 1
+    let sp = [| mp.ptr; int vm.a1 |]
+    vm.v0 <- _vfsnprintf vm 0 mp.buf sp vm.a2 [| vm.a3; vm.a4; vm.a5 |]
 
 let strcmp (vm:VM) =
-    vm.v0 <- 
-        let rec cmp a b =
-            let va = read8 vm a
-            let vb = read8 vm b
+    vm.v0 <-
+        let mp1 = getPtr vm vm.a0 1
+        let mp2 = getPtr vm vm.a1 1
+        let rec cmp (ab:byte[]) ap (bb:byte[]) bp =
+            let va = ab.[ap]
+            let vb = bb.[bp]
             if va = 0uy && vb = 0uy then 0
             else if va < vb then -1
             else if va > vb then 1
-            else cmp (a + 1UL) (b + 1UL)
-        cmp vm.a0 vm.a1 |> uint64
+            else cmp ab (ap + 1) bb (bp + 1)
+        cmp mp1.buf mp1.ptr mp2.buf mp2.ptr |> uint64
 
 let funcs =
     [| exit
