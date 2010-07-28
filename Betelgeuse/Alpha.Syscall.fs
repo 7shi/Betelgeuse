@@ -293,17 +293,46 @@ let snprintf (vm:VM) =
     vm.v0 <- _vfsnprintf vm 0 mp.buf sp vm.a2 [| vm.a3; vm.a4; vm.a5 |]
 
 let strcmp (vm:VM) =
-    vm.v0 <-
-        let mp1 = getPtr vm vm.a0 1
-        let mp2 = getPtr vm vm.a1 1
-        let rec cmp (ab:byte[]) ap (bb:byte[]) bp =
-            let va = ab.[ap]
-            let vb = bb.[bp]
-            if va = 0uy && vb = 0uy then 0
-            else if va < vb then -1
-            else if va > vb then 1
-            else cmp ab (ap + 1) bb (bp + 1)
-        cmp mp1.buf mp1.ptr mp2.buf mp2.ptr |> uint64
+    let mp1 = getPtr vm vm.a0 1
+    let mp2 = getPtr vm vm.a1 1
+    let rec cmp i =
+        let v1 = mp1.buf.[mp1.ptr + i]
+        let v2 = mp2.buf.[mp2.ptr + i]
+        if v1 = 0uy && v2 = 0uy then 0
+        else if v1 < v2 then -1
+        else if v1 > v2 then 1
+        else cmp (i + 1)
+    vm.v0 <- uint64 <| cmp 0
+
+let _strncpy (vm:VM) (mp1:Ptr) (mp2:Ptr) len =
+    let rec ncpy i len =
+        if len > 0 then
+            let v = mp2.buf.[mp2.ptr + i]
+            mp1.buf.[mp1.ptr + i] <- v
+            if v <> 0uy then ncpy (i + 1) (len - 1)
+    ncpy 0 len
+    vm.a0
+
+let strncpy (vm:VM) =
+    vm.v0 <- _strncpy vm (getPtr vm vm.a0 1) (getPtr vm vm.a1 1) (int vm.a2)
+
+let strncat (vm:VM) =
+    let mp1 = getPtr vm vm.a0 1
+    let mp2 = getPtr vm vm.a1 1
+    let rec ncat i len =
+        if len > 0 then
+            if mp1.buf.[mp1.ptr + i] = 0uy then
+                 _strncpy vm { buf = mp1.buf; ptr = mp1.ptr + i } mp2 len |> ignore
+            else
+                ncat (i + 1) (len - 1)
+    ncat 0 (int vm.a2)
+    vm.v0 <- vm.a0
+
+let strlen (vm:VM) =
+    let mp = getPtr vm vm.a0 1
+    let rec len i =
+        if mp.buf.[mp.ptr + i] = 0uy then i else len (i + 1)
+    vm.v0 <- uint64 <| len 0
 
 let funcs =
     [| exit
@@ -317,7 +346,10 @@ let funcs =
        printf
        fprintf
        snprintf
-       strcmp |]
+       strcmp
+       strncpy
+       strncat
+       strlen |]
 
 let funcStart = 0x00ef0000UL
 let funcEnd = funcStart + uint64(funcs.Length * 4)
