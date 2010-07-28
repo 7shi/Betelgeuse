@@ -181,16 +181,16 @@ let exec vm (elf:ELF64) (tw:TextWriter) (args:string[]) =
         pargs <- pargs + argb.[i].Length
     
     let argv = stackStart + (pargv |> uint64)
-    vm.reg.[Regs.RA |> int] <- stackEnd
-    vm.reg.[Regs.SP |> int] <- argv
-    vm.reg.[Regs.A0 |> int] <- args.Length |> uint64
-    vm.reg.[Regs.A1 |> int] <- argv
+    vm.ra <- stackEnd
+    vm.sp <- argv
+    vm.a0 <- args.Length |> uint64
+    vm.a1 <- argv
 
     let text  = elf.Text
     let start = text.sh_addr
     let end'  = start + text.sh_size
     vm.pc <- elf.e_entry
-    vm.reg.[Regs.T12 |> int] <- elf.e_entry // t12 for gp
+    vm.t12 <- elf.e_entry // t12 for gp
 
     tw.WriteLine("pc={0:x16}: 開始", vm.pc)
     let startTime = DateTime.Now

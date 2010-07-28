@@ -33,10 +33,9 @@ let exit (vm:VM) =
     vm.pc <- stackEnd
 
 let fputc (vm:VM) =
-    vm.pc <- vm.reg.[Regs.RA |> int]
-    let c = vm.reg.[Regs.A0 |> int] |> char
-    let f = vm.reg.[Regs.A1 |> int] |> int
-    vm.reg.[Regs.V0 |> int] <-
+    let c = vm.a0 |> char
+    let f = vm.a1 |> int
+    vm.v0 <-
         if f = 0 then
             if c = '\n' then
                 vm.out.WriteLine()
@@ -55,10 +54,9 @@ let fputc (vm:VM) =
                 with _ -> uint64(-1)
 
 let fgetc (vm:VM) =
-    vm.pc <- vm.reg.[Regs.RA |> int]
-    let f = vm.reg.[Regs.A0 |> int] |> int
+    let f = vm.a0 |> int
     let fs = getSlot f
-    vm.reg.[Regs.V0 |> int] <-
+    vm.v0 <-
         if box fs = null then uint64(-1)
         else
             try
@@ -70,11 +68,10 @@ let fgetc (vm:VM) =
             with _ -> uint64(-1)
 
 let fopen (vm:VM) =
-    vm.pc <- vm.reg.[Regs.RA |> int]
-    let fn = readString vm vm.reg.[Regs.A0 |> int]
-    let md = readString vm vm.reg.[Regs.A1 |> int]
+    let fn = readString vm vm.a0
+    let md = readString vm vm.a1
     let f = openSlot()
-    vm.reg.[Regs.V0 |> int] <-
+    vm.v0 <-
         if f = 0 then 0UL
         else
             try
@@ -94,10 +91,9 @@ let fopen (vm:VM) =
             with _ -> 0UL
 
 let fclose (vm:VM) =
-    vm.pc <- vm.reg.[Regs.RA |> int]
-    let f = vm.reg.[Regs.A0 |> int] |> int
+    let f = vm.a0 |> int
     let fs = getSlot f
-    vm.reg.[Regs.V0 |> int] <-
+    vm.v0 <-
         if box fs = null then
             uint64(-1)
         else
@@ -108,13 +104,12 @@ let fclose (vm:VM) =
             0UL
 
 let fwrite (vm:VM) =
-    vm.pc <- vm.reg.[Regs.RA |> int]
-    let p = vm.reg.[Regs.A0 |> int]
-    let s = vm.reg.[Regs.A1 |> int] |> int
-    let n = vm.reg.[Regs.A2 |> int] |> int
-    let f = vm.reg.[Regs.A3 |> int] |> int
+    let p = vm.a0
+    let s = vm.a1 |> int
+    let n = vm.a2 |> int
+    let f = vm.a3 |> int
     let fs = getSlot f
-    vm.reg.[Regs.V0 |> int] <-
+    vm.v0 <-
         if box fs = null then 0UL
         else
             let mp = getPtr vm p (s * n)
@@ -131,13 +126,12 @@ let fwrite (vm:VM) =
             write 0 |> uint64
 
 let fread (vm:VM) =
-    vm.pc <- vm.reg.[Regs.RA |> int]
-    let p = vm.reg.[Regs.A0 |> int]
-    let s = vm.reg.[Regs.A1 |> int] |> int
-    let n = vm.reg.[Regs.A2 |> int] |> int
-    let f = vm.reg.[Regs.A3 |> int] |> int
+    let p = vm.a0
+    let s = vm.a1 |> int
+    let n = vm.a2 |> int
+    let f = vm.a3 |> int
     let fs = getSlot f
-    vm.reg.[Regs.V0 |> int] <-
+    vm.v0 <-
         if box fs = null then 0UL
         else
             let mp = getPtr vm p (s * n)
@@ -153,12 +147,11 @@ let fread (vm:VM) =
             read 0 |> uint64
 
 let fseek (vm:VM) =
-    vm.pc <- vm.reg.[Regs.RA |> int]
-    let f = vm.reg.[Regs.A0 |> int] |> int
-    let o = vm.reg.[Regs.A1 |> int] |> int64
-    let s = vm.reg.[Regs.A2 |> int] |> int
+    let f = vm.a0 |> int
+    let o = vm.a1 |> int64
+    let s = vm.a2 |> int
     let fs = getSlot f
-    vm.reg.[Regs.V0 |> int] <-
+    vm.v0 <-
         if box fs = null then 1UL
         else
             try
@@ -191,8 +184,8 @@ let funcEnd = funcStart + uint64(funcs.Length * 4)
 
 let callFunc (vm:VM) =
     let f = int(vm.pc - funcStart) >>> 2
+    vm.pc <- vm.ra
     if f < 0 || f >= funcs.Length then
-        vm.pc <- vm.reg.[Regs.RA |> int]
         raise << vm.Abort <| sprintf "[Syscall] 未実装: %x" f
     else
         funcs.[f] vm
