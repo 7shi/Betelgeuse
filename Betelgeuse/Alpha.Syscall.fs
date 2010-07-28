@@ -231,9 +231,9 @@ let _parseint (buf:byte[]) (ptr:int) =
         else parse (b * 10 + int(ch - byte('0'))) (p + 1)
     parse 0 0
 
-let _vfsnprintf (vm:VM) (f:int) (psb:uint64[]) (plen:uint64[]) (format:uint64) (args:uint64[]) stack =
+let _vfsnprintf (vm:VM) (f:int) (psb:uint64[]) (plen:uint64[]) (format:uint64) (args:uint64[]) =
     let get_arg n =
-        if n < args.Length then args.[n] else read64 vm (vm.sp + uint64((n - args.Length + stack) * 8))
+        if n < args.Length then args.[n] else read64 vm (vm.sp + uint64((n - args.Length) * 8))
     let mp = getPtr vm format 1
     let rec write len p arg =
         let ch = mp.buf.[mp.ptr + p]
@@ -282,15 +282,15 @@ let _vfsnprintf (vm:VM) (f:int) (psb:uint64[]) (plen:uint64[]) (format:uint64) (
     write 0 0 0 |> uint64
 
 let printf (vm:VM) =
-    vm.v0 <- _vfsnprintf vm 0 null null vm.a0 [| vm.a1; vm.a2; vm.a3; vm.a4; vm.a5 |] 0
+    vm.v0 <- _vfsnprintf vm 0 null null vm.a0 [| vm.a1; vm.a2; vm.a3; vm.a4; vm.a5 |]
 
 let fprintf (vm:VM) =
-    vm.v0 <- _vfsnprintf vm (int vm.a0) null null vm.a1 [| vm.a2; vm.a3; vm.a4; vm.a5 |] 0
+    vm.v0 <- _vfsnprintf vm (int vm.a0) null null vm.a1 [| vm.a2; vm.a3; vm.a4; vm.a5 |]
 
 let snprintf (vm:VM) =
     let psb = [| vm.a0 |]
     let plen = [| vm.a1 |]
-    vm.v0 <- _vfsnprintf vm 0 psb plen vm.a2 [| vm.a3; vm.a4; vm.a5 |] 2
+    vm.v0 <- _vfsnprintf vm 0 psb plen vm.a2 [| vm.a3; vm.a4; vm.a5 |]
 
 let strcmp (vm:VM) =
     vm.v0 <- 
