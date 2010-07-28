@@ -79,7 +79,4 @@ let readString vm addr =
     let mp = getPtr vm addr 1
     let rec read p =
         if mp.buf.[mp.ptr + p] = 0uy then p else read(p + 1)
-    let len = read 0
-    let bytes = Array.zeroCreate<byte> len
-    array.Copy(mp.buf, mp.ptr, bytes, 0, len)
-    Encoding.UTF8.GetString(bytes, 0, bytes.Length)
+    Encoding.UTF8.GetString(mp.buf, mp.ptr, read 0)
