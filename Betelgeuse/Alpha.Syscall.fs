@@ -33,9 +33,9 @@ let exit (vm:VM) =
     vm.pc <- stackEnd
 
 let fputc (vm:VM) =
-    let c = vm.a0 |> char
-    let f = vm.a1 |> int
     vm.v0 <-
+        let c = vm.a0 |> char
+        let f = vm.a1 |> int
         if f = 0 then
             if c = '\n' then
                 vm.out.WriteLine()
@@ -54,9 +54,9 @@ let fputc (vm:VM) =
                 with _ -> uint64(-1)
 
 let fgetc (vm:VM) =
-    let f = vm.a0 |> int
-    let fs = getSlot f
     vm.v0 <-
+        let f = vm.a0 |> int
+        let fs = getSlot f
         if box fs = null then uint64(-1)
         else
             try
@@ -68,10 +68,10 @@ let fgetc (vm:VM) =
             with _ -> uint64(-1)
 
 let fopen (vm:VM) =
-    let fn = readString vm vm.a0
-    let md = readString vm vm.a1
-    let f = openSlot()
     vm.v0 <-
+        let fn = readString vm vm.a0
+        let md = readString vm vm.a1
+        let f = openSlot()
         if f = 0 then 0UL
         else
             try
@@ -91,9 +91,9 @@ let fopen (vm:VM) =
             with _ -> 0UL
 
 let fclose (vm:VM) =
-    let f = vm.a0 |> int
-    let fs = getSlot f
     vm.v0 <-
+        let f = vm.a0 |> int
+        let fs = getSlot f
         if box fs = null then
             uint64(-1)
         else
@@ -104,12 +104,12 @@ let fclose (vm:VM) =
             0UL
 
 let fwrite (vm:VM) =
-    let p = vm.a0
-    let s = vm.a1 |> int
-    let n = vm.a2 |> int
-    let f = vm.a3 |> int
-    let fs = getSlot f
     vm.v0 <-
+        let p = vm.a0
+        let s = vm.a1 |> int
+        let n = vm.a2 |> int
+        let f = vm.a3 |> int
+        let fs = getSlot f
         if box fs = null then 0UL
         else
             let mp = getPtr vm p (s * n)
@@ -126,12 +126,12 @@ let fwrite (vm:VM) =
             write 0 |> uint64
 
 let fread (vm:VM) =
-    let p = vm.a0
-    let s = vm.a1 |> int
-    let n = vm.a2 |> int
-    let f = vm.a3 |> int
-    let fs = getSlot f
     vm.v0 <-
+        let p = vm.a0
+        let s = vm.a1 |> int
+        let n = vm.a2 |> int
+        let f = vm.a3 |> int
+        let fs = getSlot f
         if box fs = null then 0UL
         else
             let mp = getPtr vm p (s * n)
@@ -147,11 +147,11 @@ let fread (vm:VM) =
             read 0 |> uint64
 
 let fseek (vm:VM) =
-    let f = vm.a0 |> int
-    let o = vm.a1 |> int64
-    let s = vm.a2 |> int
-    let fs = getSlot f
     vm.v0 <-
+        let f = vm.a0 |> int
+        let o = vm.a1 |> int64
+        let s = vm.a2 |> int
+        let fs = getSlot f
         if box fs = null then 1UL
         else
             try
