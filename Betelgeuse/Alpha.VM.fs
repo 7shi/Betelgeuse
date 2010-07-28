@@ -3,6 +3,8 @@
 open System
 open System.IO
 
+type VMException(s) = inherit Exception(s)
+
 type VM =
     { mutable pc : uint64
       reg        : uint64[]
@@ -13,7 +15,7 @@ type VM =
       memoryEnd  : uint64
       mutable out: TextWriter }
 
-    member x.Abort(msg:string) = new Exception(sprintf "pc=%016x: %s" (x.pc - 4UL) msg)
+    member x.Abort(msg:string) = new VMException(sprintf "pc=%016x: %s" (x.pc - 4UL) msg)
     
     member x.v0   with get() = x.reg.[ 0] and set(v) = x.reg.[ 0] <- v
     member x.t0   with get() = x.reg.[ 1] and set(v) = x.reg.[ 1] <- v

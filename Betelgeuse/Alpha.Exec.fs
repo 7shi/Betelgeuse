@@ -195,14 +195,18 @@ let exec vm (elf:ELF64) (tw:TextWriter) (args:string[]) =
     tw.WriteLine("pc={0:x16}: 開始", vm.pc)
     let startTime = DateTime.Now
     
-    while vm.pc <> stackEnd do
-        if start <= vm.pc && vm.pc < end' then
-            execStep vm
-        else if funcStart <= vm.pc && vm.pc < funcEnd then
-            callFunc vm
-        else
-            vm.pc <- vm.pc + 4UL
-            raise << vm.Abort <| "不正な実行アドレス"
+    try
+        while vm.pc <> stackEnd do
+            if start <= vm.pc && vm.pc < end' then
+                execStep vm
+            else if funcStart <= vm.pc && vm.pc < funcEnd then
+                callFunc vm
+            else
+                vm.pc <- vm.pc + 4UL
+                raise << vm.Abort <| "不正な実行アドレス"
+    with
+    | :? VMException -> reraise()
+    | e -> raise << vm.Abort <| e.Message
 
     tw.WriteLine("---")
     tw.WriteLine("完了しました: {0:0.00}s", (DateTime.Now - startTime).TotalSeconds)
