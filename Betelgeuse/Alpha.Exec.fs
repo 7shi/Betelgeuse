@@ -11,7 +11,7 @@ open Alpha.Memory
 open Alpha.Table
 open Alpha.Syscall
 
-let execStep vm =
+let execOp vm =
     let code = read32 vm vm.pc
     let op = getOp code
     let reg = vm.reg
@@ -195,15 +195,17 @@ let exec vm (elf:ELF64) (tw:TextWriter) (args:string[]) =
     tw.WriteLine("pc={0:x16}: 開始", vm.pc)
     let startTime = DateTime.Now
     
+    execStep <- fun vm ->
+        if start <= vm.pc && vm.pc < end' then
+            execOp vm
+        else if funcStart <= vm.pc && vm.pc < funcEnd then
+            callFunc vm
+        else
+            vm.pc <- vm.pc + 4UL
+            raise << vm.Abort <| "不正な実行アドレス"
+    
     try
-        while vm.pc <> stackEnd do
-            if start <= vm.pc && vm.pc < end' then
-                execStep vm
-            else if funcStart <= vm.pc && vm.pc < funcEnd then
-                callFunc vm
-            else
-                vm.pc <- vm.pc + 4UL
-                raise << vm.Abort <| "不正な実行アドレス"
+        while vm.pc <> stackEnd do execStep vm
     with
     | :? VMException -> reraise()
     | e -> raise << vm.Abort <| e.Message

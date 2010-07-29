@@ -28,6 +28,7 @@ char *(*strncat)(char *, const char *, size_t) = (void *)0x00ef0034;
 size_t (*strlen)(const char *) = (void *)0x00ef0038;
 void *(*memcpy)(void *, const void *, size_t) = (void *)0x00ef003c;
 void *(*memset)(void *, int, size_t) = (void *)0x00ef0040;
+void *(*lfind)(const void *, const void *, size_t *, size_t, int (*)(const void *, const void *)) = (void *)0x00ef0044;
 #else
 typedef long long int64_t;
 typedef unsigned long long uint64_t;
@@ -866,12 +867,10 @@ int bsearch_string(const char **list, const char *target, int start, int end)
     return -1;
 }
 
-int lsearch_string(const char **list, int len, const char *target)
+int lsearch_string(const char **list, size_t len, const char *target)
 {
-    int i;
-    for (i = 0; i < len; i++)
-        if (strcmp(list[i], target) == 0) return i;
-    return -1;
+    const char **p = lfind(target, list, &len, sizeof(const char *), (void *)strcmp);
+    return p ? p - list : -1;
 }
 
 int search_op(const char *mne)

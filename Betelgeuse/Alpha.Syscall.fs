@@ -10,6 +10,7 @@ open Alpha.Memory
 let mutable openWrite = new Func<string, Stream>(fun fn -> new FileStream(fn, FileMode.Create) :> Stream)
 let mutable openRead  = new Func<string, Stream>(fun fn -> new FileStream(fn, FileMode.Open  ) :> Stream)
 let mutable closeFile = new Action<string, Stream, int>(fun _ s _ -> s.Dispose())
+let mutable execStep  = fun (vm:VM) -> ()
 
 let slots = Array.zeroCreate<Stream> 32
 let fname = Array.zeroCreate<string> slots.Length
@@ -292,9 +293,7 @@ let snprintf (vm:VM) =
     let sp = [| mp.ptr; int vm.a1 |]
     vm.v0 <- _vfsnprintf vm 0 mp.buf sp vm.a2 [| vm.a3; vm.a4; vm.a5 |]
 
-let strcmp (vm:VM) =
-    let mp1 = getPtr vm vm.a0 1
-    let mp2 = getPtr vm vm.a1 1
+let _strcmp (mp1:Ptr) (mp2:Ptr) =
     let rec cmp i =
         let v1 = mp1.buf.[mp1.ptr + i]
         let v2 = mp2.buf.[mp2.ptr + i]
@@ -302,7 +301,9 @@ let strcmp (vm:VM) =
         else if v1 < v2 then -1
         else if v1 > v2 then 1
         else cmp (i + 1)
-    vm.v0 <- uint64 <| cmp 0
+    cmp 0
+
+let strcmp (vm:VM) = vm.v0 <- uint64 <| _strcmp (getPtr vm vm.a0 1) (getPtr vm vm.a1 1)
 
 let _strncpy (vm:VM) (mp1:Ptr) (mp2:Ptr) len =
     let rec ncpy i len =
@@ -347,6 +348,43 @@ let memset (vm:VM) =
     for i = 0 to len do mp.buf.[mp.ptr + i] <- b
     vm.v0 <- vm.a0
 
+let lfind (vm:VM) =
+    let key = vm.a0
+    let base' = vm.a1
+    let num = read32 vm vm.a2 |> int
+    let width = vm.a3
+    let compare = vm.a4
+    if width = 8UL && compare = 0x00ef002cUL then
+        let mpkey = getPtr vm key 1
+        let rec lfind' base' num =
+            if num < 1 then 0UL
+            else if (_strcmp mpkey (getPtr vm (read64 vm base') 1)) = 0 then base'
+            else lfind' (base' + width) (num - 1)
+        vm.v0 <- lfind' base' num
+    else
+        let pc = vm.pc
+        let ra = 0x00ef0044UL + 4UL
+        vm.sp <- vm.sp - 16UL
+        write64 vm vm.sp vm.ra
+        write64 vm (vm.sp + 8UL) vm.fp
+        vm.fp <- vm.sp
+        let fp = vm.fp
+        let rec lfind' base' num =
+            if num < 1 then 0UL else
+                vm.a0 <- key
+                vm.a1 <- read64 vm base'
+                vm.ra <- ra
+                vm.t12 <- compare
+                vm.pc <- compare
+                while vm.pc <> ra || vm.fp <> fp do execStep vm
+                if vm.v0 = 0UL then base' else lfind' (base' + width) (num - 1)
+        vm.v0 <- lfind' base' num
+        vm.sp <- vm.fp
+        vm.ra <- read64 vm vm.sp
+        vm.fp <- read64 vm (vm.sp + 8UL)
+        vm.sp <- vm.sp + 16UL
+        vm.pc <- pc
+
 let funcs =
     [| exit
        fputc
@@ -364,7 +402,8 @@ let funcs =
        strncat
        strlen
        memcpy
-       memset |]
+       memset
+       lfind |]
 
 let funcStart = 0x00ef0000UL
 let funcEnd = funcStart + uint64(funcs.Length * 4)
