@@ -392,7 +392,43 @@ let lfind (vm:VM) =
     if width = 8UL && compare = 0x00ef002cUL then
         vm.v0 <- _lfind_string vm (getPtr vm key 1) base' num width
     else
-        pseudoProc vm (fun fp -> _lfind vm key base' num width compare)
+        pseudoProc vm (fun() -> _lfind vm key base' num width compare)
+
+let rec _bsearch (vm:VM) (key:uint64) (base':uint64) num width (compare:uint64) =
+    if num <= 4 then _lfind vm key base' num width compare else
+        let center = (num - 1) / 2
+        let pcenter = base' + uint64(center) * width
+        pseudoCall_2 vm (0x00ef0048UL + 4UL) compare key (read64 vm pcenter)
+        let cmp = int << int64 <| vm.v0
+        if cmp = 0 then
+            pcenter
+        else if cmp < 0 then
+            _bsearch vm key base' center width compare
+        else 
+            _bsearch vm key (pcenter + width) (num - center - 1) width compare
+
+let rec _bsearch_string (vm:VM) (mpkey:Ptr) (base':uint64) num width =
+    if num <= 4 then _lfind_string vm mpkey base' num width else
+        let center = (num - 1) / 2
+        let pcenter = base' + uint64(center) * width
+        let cmp = _strcmp mpkey (getPtr vm (read64 vm pcenter) 1)
+        if cmp = 0 then
+            pcenter
+        else if cmp < 0 then
+            _bsearch_string vm mpkey base' center width
+        else 
+            _bsearch_string vm mpkey (pcenter + width) (num - center - 1) width
+
+let bsearch (vm:VM) =
+    let key = vm.a0
+    let base' = vm.a1
+    let num = vm.a2 |> int
+    let width = vm.a3
+    let compare = vm.a4
+    if width = 8UL && compare = 0x00ef002cUL then
+        vm.v0 <- _bsearch_string vm (getPtr vm key 1) base' num width
+    else
+        pseudoProc vm (fun() -> _bsearch vm key base' num width compare)
 
 let funcs =
     [| exit
@@ -412,7 +448,8 @@ let funcs =
        strlen
        memcpy
        memset
-       lfind |]
+       lfind
+       bsearch |]
 
 let funcStart = 0x00ef0000UL
 let funcEnd = funcStart + uint64(funcs.Length * 4)

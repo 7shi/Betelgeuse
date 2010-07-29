@@ -29,6 +29,7 @@ size_t (*strlen)(const char *) = (void *)0x00ef0038;
 void *(*memcpy)(void *, const void *, size_t) = (void *)0x00ef003c;
 void *(*memset)(void *, int, size_t) = (void *)0x00ef0040;
 void *(*lfind)(const void *, const void *, size_t *, size_t, int (*)(const void *, const void *)) = (void *)0x00ef0044;
+void *(*bsearch)(const void *, const void *, size_t, size_t, int (*)(const void *, const void *)) = (void *)0x00ef0048;
 #else
 typedef long long int64_t;
 typedef unsigned long long uint64_t;
@@ -845,26 +846,10 @@ void init_table()
     }
 }
 
-int bsearch_string(const char **list, const char *target, int start, int end)
+int bsearch_string(const char **list, const char *target, int len)
 {
-    if (end - start < 4)
-    {
-        int i;
-        for (i = start; i <= end; i++)
-            if (strcmp(target, list[i]) == 0) return i;
-    }
-    else
-    {
-        int center = (start + end) / 2;
-        int cmp = strcmp(target, list[center]);
-        if (cmp == 0)
-            return center;
-        else if (cmp < 0)
-            return bsearch_string(list, target, start, center - 1);
-        else
-            return bsearch_string(list, target, center + 1, end);
-    }
-    return -1;
+    const char **p = bsearch(target, list, len, sizeof(const char *), (void *)strcmp);
+    return p ? p - list : -1;
 }
 
 int lsearch_string(const char **list, size_t len, const char *target)
@@ -875,7 +860,7 @@ int lsearch_string(const char **list, size_t len, const char *target)
 
 int search_op(const char *mne)
 {
-    return bsearch_string(opnames, mne, 0, oplen - 1);
+    return bsearch_string(opnames, mne, oplen);
 }
 
 uint64_t text_addr, text_size, curad;

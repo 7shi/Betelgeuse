@@ -24,6 +24,8 @@ char *(*strncat)(char *, const char *, size_t) = (void *)0x00ef0034;
 size_t (*strlen)(const char *) = (void *)0x00ef0038;
 void *(*memcpy)(void *, const void *, size_t) = (void *)0x00ef003c;
 void *(*memset)(void *, int, size_t) = (void *)0x00ef0040;
+void *(*lfind)(const void *, const void *, size_t *, size_t, int (*)(const void *, const void *)) = (void *)0x00ef0044;
+void *(*bsearch)(const void *, const void *, size_t, size_t, int (*)(const void *, const void *)) = (void *)0x00ef0048;
 
 /* -------------------------------- */
 
