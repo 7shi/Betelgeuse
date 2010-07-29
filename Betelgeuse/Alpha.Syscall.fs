@@ -348,6 +348,41 @@ let memset (vm:VM) =
     for i = 0 to len do mp.buf.[mp.ptr + i] <- b
     vm.v0 <- vm.a0
 
+let pseudoProc (vm:VM) (proc:unit->uint64) =
+    let pc = vm.pc
+    vm.sp <- vm.sp - 16UL
+    write64 vm vm.sp vm.ra
+    write64 vm (vm.sp + 8UL) vm.fp
+    vm.fp <- vm.sp
+    vm.v0 <- proc()
+    vm.sp <- vm.fp
+    vm.ra <- read64 vm vm.sp
+    vm.fp <- read64 vm (vm.sp + 8UL)
+    vm.sp <- vm.sp + 16UL
+    vm.pc <- pc
+
+let pseudoCall (vm:VM) (ra:uint64) (proc:uint64) (a0:uint64) =
+    vm.a0 <- a0
+    vm.ra <- ra
+    vm.t12 <- proc
+    vm.pc <- proc
+    let fp = vm.fp
+    while vm.pc <> ra || vm.fp <> fp do execStep vm
+
+let pseudoCall_2 (vm:VM) (ra:uint64) (proc:uint64) (a0:uint64) (a1:uint64) =
+    vm.a1 <- a1
+    pseudoCall vm ra proc a0
+
+let rec _lfind (vm:VM) (key:uint64) (base':uint64) num width (compare:uint64) =
+    if num < 1 then 0UL else
+        pseudoCall_2 vm (0x00ef0044UL + 4UL) compare key (read64 vm base')
+        if vm.v0 = 0UL then base' else _lfind vm key (base' + width) (num - 1) width compare
+
+let rec _lfind_string (vm:VM) (mpkey:Ptr) (base':uint64) num width =
+    if num < 1 then 0UL
+    else if (_strcmp mpkey (getPtr vm (read64 vm base') 1)) = 0 then base'
+    else _lfind_string vm mpkey (base' + width) (num - 1) width
+
 let lfind (vm:VM) =
     let key = vm.a0
     let base' = vm.a1
@@ -355,35 +390,9 @@ let lfind (vm:VM) =
     let width = vm.a3
     let compare = vm.a4
     if width = 8UL && compare = 0x00ef002cUL then
-        let mpkey = getPtr vm key 1
-        let rec lfind' base' num =
-            if num < 1 then 0UL
-            else if (_strcmp mpkey (getPtr vm (read64 vm base') 1)) = 0 then base'
-            else lfind' (base' + width) (num - 1)
-        vm.v0 <- lfind' base' num
+        vm.v0 <- _lfind_string vm (getPtr vm key 1) base' num width
     else
-        let pc = vm.pc
-        let ra = 0x00ef0044UL + 4UL
-        vm.sp <- vm.sp - 16UL
-        write64 vm vm.sp vm.ra
-        write64 vm (vm.sp + 8UL) vm.fp
-        vm.fp <- vm.sp
-        let fp = vm.fp
-        let rec lfind' base' num =
-            if num < 1 then 0UL else
-                vm.a0 <- key
-                vm.a1 <- read64 vm base'
-                vm.ra <- ra
-                vm.t12 <- compare
-                vm.pc <- compare
-                while vm.pc <> ra || vm.fp <> fp do execStep vm
-                if vm.v0 = 0UL then base' else lfind' (base' + width) (num - 1)
-        vm.v0 <- lfind' base' num
-        vm.sp <- vm.fp
-        vm.ra <- read64 vm vm.sp
-        vm.fp <- read64 vm (vm.sp + 8UL)
-        vm.sp <- vm.sp + 16UL
-        vm.pc <- pc
+        pseudoProc vm (fun fp -> _lfind vm key base' num width compare)
 
 let funcs =
     [| exit
