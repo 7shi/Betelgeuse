@@ -30,6 +30,7 @@ void *(*memcpy)(void *, const void *, size_t) = (void *)0x00ef003c;
 void *(*memset)(void *, int, size_t) = (void *)0x00ef0040;
 void *(*lfind)(const void *, const void *, size_t *, size_t, int (*)(const void *, const void *)) = (void *)0x00ef0044;
 void *(*bsearch)(const void *, const void *, size_t, size_t, int (*)(const void *, const void *)) = (void *)0x00ef0048;
+int (*stricmp)(const char *, const char *) = (void *)0x00ef004c;
 #else
 typedef long long int64_t;
 typedef unsigned long long uint64_t;
@@ -848,13 +849,13 @@ void init_table()
 
 int bsearch_string(const char **list, const char *target, int len)
 {
-    const char **p = bsearch(target, list, len, sizeof(const char *), (void *)strcmp);
+    const char **p = bsearch(target, list, len, sizeof(const char *), (void *)stricmp);
     return p ? p - list : -1;
 }
 
 int lsearch_string(const char **list, size_t len, const char *target)
 {
-    const char **p = lfind(target, list, &len, sizeof(const char *), (void *)strcmp);
+    const char **p = lfind(target, list, &len, sizeof(const char *), (void *)stricmp);
     return p ? p - list : -1;
 }
 
@@ -1033,18 +1034,6 @@ enum Token read_token()
     return EndL;
 }
 
-void to_lower(char *dst, int len, const char *src)
-{
-    int p;
-    for (p = 0;; p++)
-    {
-        char ch = p < len - 1 ? src[p] : 0;
-        if (is_ualpha(ch)) ch += 32;
-        dst[p] = ch;
-        if (!ch) break;
-    }
-}
-
 uint64_t parse_uint(const char *n)
 {
     uint64_t ret = 0;
@@ -1098,10 +1087,7 @@ int parse_reg(enum Regs *reg, const char *s)
     }
     else
     {
-        char buf[8];
-        int r;
-        to_lower(buf, sizeof(buf), s);
-        r = lsearch_string(regname, reglen, buf);
+        int r = lsearch_string(regname, reglen, s);
         if (r != -1)
         {
             *reg = (enum Regs)r;
@@ -1523,15 +1509,13 @@ int assemble_token(enum Token token)
     case Symbol:
         {
             int opn;
-            char buf[32];
-            to_lower(buf, sizeof(buf), token_buf);
-            if ((opn = search_op(buf)) != -1)
+            if ((opn = search_op(token_buf)) != -1)
                 assemble_op(opcodes[opn]);
-            else if ((opn = lsearch_string(popnames, poplen, buf)) != -1)
+            else if ((opn = lsearch_string(popnames, poplen, token_buf)) != -1)
                 assemble_pop((enum POp)opn);
-            else if (buf[0] == 'o' && buf[1] == 'p' && buf[2] == 'c')
+            else if (token_buf[0] == 'o' && token_buf[1] == 'p' && token_buf[2] == 'c')
             {
-                int op1 = (int)parse_uint(buf + 3);
+                int op1 = (int)parse_uint(token_buf + 3);
                 uint64_t num;
                 if (!parse_value(&num)) return 0;
                 assemble_pcd(op1, (int)num);
