@@ -32,6 +32,11 @@ void *(*lfind)(const void *, const void *, size_t *, size_t, int (*)(const void 
 void *(*bsearch)(const void *, const void *, size_t, size_t, int (*)(const void *, const void *)) = (void *)0x00ef0048;
 int (*stricmp)(const char *, const char *) = (void *)0x00ef004c;
 unsigned long (*strtoul)(const char *, char **, int) = (void *)0x00ef0050;
+int (*isdigit)(int) = (void *)0x00ef0054;
+int (*isupper)(int) = (void *)0x00ef0058;
+int (*islower)(int) = (void *)0x00ef005c;
+int (*isalpha)(int) = (void *)0x00ef0060;
+int (*isalnum)(int) = (void *)0x00ef0064;
 #else
 typedef long long int64_t;
 typedef unsigned long long uint64_t;
@@ -61,6 +66,11 @@ void *lfind(const void *, const void *, size_t *, size_t, int (*)(const void *, 
 void *bsearch(const void *, const void *, size_t, size_t, int (*)(const void *, const void *));
 int stricmp(const char *, const char *);
 unsigned long strtoul(const char *, char **, int);
+int isdigit(int);
+int isupper(int);
+int islower(int);
+int isalpha(int);
+int isalnum(int);
 #endif
 
 /* Alpha declaration */
@@ -913,14 +923,9 @@ void skip_line()
     }
 }
 
-int is_num(int ch) { return '0' <= ch && ch <= '9'; }
-int is_ualpha(int ch) { return 'A' <= ch && ch <= 'Z'; }
-int is_lalpha(int ch) { return 'a' <= ch && ch <= 'z'; }
-int is_alpha(int ch) { return is_ualpha(ch) || is_lalpha(ch); }
-int is_alphanum(int ch) { return is_alpha(ch) || is_num(ch); }
-int is_letter(int ch) { return ch == '_' || is_alphanum(ch); }
+int is_letter(int ch) { return ch == '_' || isalnum(ch); }
 int is_oct(int ch) { return '0' <= ch && ch <= '7'; }
-int is_hex(int ch) { return is_num(ch) || ('A' <= ch && ch <= 'F') || ('a' <= ch && ch <= 'f'); }
+int is_hex(int ch) { return isdigit(ch) || ('A' <= ch && ch <= 'F') || ('a' <= ch && ch <= 'f'); }
 
 void read_chars(char *buf, int len, int(*cond)(int))
 {
@@ -970,7 +975,7 @@ enum Token read_token()
             if (p < sizeof(token_buf))
                 token_buf[p++] = p < sizeof(token_buf) - 1 ? ch : 0;
             ch = read_char();
-            if ('0' <= ch && ch <= '9')
+            if (is_oct(ch))
             {
                 last_ch = ch;
                 read_chars(token_buf + p, sizeof(token_buf) - p, is_oct);
@@ -1004,10 +1009,10 @@ enum Token read_token()
                 return Int;
             }
         }
-        else if (is_num(ch))
+        else if (isdigit(ch))
         {
             last_ch = ch;
-            read_chars(token_buf, sizeof(token_buf), is_num);
+            read_chars(token_buf, sizeof(token_buf), isdigit);
             return Int;
         }
         else if (is_letter(ch))
@@ -1049,8 +1054,8 @@ char *dummy;
 int parse_reg(enum Regs *reg, const char *s)
 {
     char ch = s[0];
-    if ((ch == 'r' || ch == 'R' || ch == 'f' || ch == 'F') && is_num(s[1])
-        && (s[2] == 0 || (is_num(s[2]) && s[3] == 0)))
+    if ((ch == 'r' || ch == 'R' || ch == 'f' || ch == 'F') && isdigit(s[1])
+        && (s[2] == 0 || (isdigit(s[2]) && s[3] == 0)))
     {
         int r = (int)strtoul(s + 1, &dummy, 10);
         if (0 <= r && r <= 31)

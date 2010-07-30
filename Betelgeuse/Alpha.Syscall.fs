@@ -448,6 +448,20 @@ let strtoul (vm:VM) =
         else loop2 (i + 1)
     vm.v0 <- loop2 0
 
+let _isdigit ch = '0' <= ch && ch <= '9'
+let _isupper ch = 'A' <= ch && ch <= 'Z'
+let _islower ch = 'a' <= ch && ch <= 'z'
+let _isalpha ch = _isupper ch || _islower ch
+let _isalnum ch = _isalpha ch || _isdigit ch
+
+let _btoul b = if b then 1UL else 0UL
+
+let isdigit (vm:VM) = vm.v0 <- _btoul << _isdigit << char <| vm.a0
+let isupper (vm:VM) = vm.v0 <- _btoul << _isupper << char <| vm.a0
+let islower (vm:VM) = vm.v0 <- _btoul << _islower << char <| vm.a0
+let isalpha (vm:VM) = vm.v0 <- _btoul << _isalpha << char <| vm.a0
+let isalnum (vm:VM) = vm.v0 <- _btoul << _isalnum << char <| vm.a0
+
 let funcs =
     [| exit
        fputc
@@ -469,7 +483,12 @@ let funcs =
        lfind
        bsearch
        stricmp
-       strtoul |]
+       strtoul
+       isdigit
+       isupper
+       islower
+       isalpha
+       isalnum |]
 
 let funcStart = 0x00ef0000UL
 let funcEnd = funcStart + uint64(funcs.Length * 4)
