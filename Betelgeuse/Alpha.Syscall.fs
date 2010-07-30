@@ -297,7 +297,7 @@ let snprintf (vm:VM) =
 let _strcmp (vm:VM) (a:uint64) (b:uint64) = (readString vm a).CompareTo(readString vm b)
 let strcmp (vm:VM) = vm.v0 <- uint64 <| _strcmp vm vm.a0 vm.a1
 
-let _stricmp (vm:VM) (a:uint64) (b:uint64) = String.Compare(readString vm a, readString vm b, true)
+let _stricmp (vm:VM) (a:uint64) (b:uint64) = (readString vm a).ToLower().CompareTo((readString vm b).ToLower())
 let stricmp (vm:VM) = vm.v0 <- uint64 <| _stricmp vm vm.a0 vm.a1
 
 let _strncpy (vm:VM) (mp1:Ptr) (mp2:Ptr) len =
