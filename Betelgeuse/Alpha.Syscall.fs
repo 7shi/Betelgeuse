@@ -416,6 +416,38 @@ let bsearch (vm:VM) =
                 pseudoCall_2 vm (0x00ef0048UL + 4UL) compare a b
                 int << int64 <| vm.v0))
 
+let strtoul (vm:VM) =
+    let p = vm.a0
+    let ep = vm.a1
+    let b = vm.a2
+    let mp = getPtr vm p 1
+    let rec loop1 v i b =
+        let ch = mp.buf.[mp.ptr + i] |> char
+        let n =
+            if Char.IsDigit(ch) then int(ch) - int('0')
+            else if 'A' <= ch && ch <= 'Z' then int(ch) - int('A') + 10
+            else if 'a' <= ch && ch <= 'z' then int(ch) - int('a') + 10
+            else -1
+        if n = -1 || n >= int(b) then
+            write64 vm ep (p + uint64(i))
+            v
+        else
+            loop1 (v * b + uint64(n)) (i + 1) b
+    let rec loop2 i =
+        let ch = mp.buf.[mp.ptr + i]
+        if ch = 0uy then 0UL
+        else if ch > 32uy then
+            if b = 0UL then
+                if ch = byte('0') then
+                    let ch2 = mp.buf.[mp.ptr + i + 1] |> char
+                    if ch2 = 'x' || ch2 = 'X' then loop1 0UL (i + 2) 16UL
+                    else loop1 0UL (i + 1) 8UL
+                else loop1 0UL i 10UL
+            else
+                loop1 0UL i b
+        else loop2 (i + 1)
+    vm.v0 <- loop2 0
+
 let funcs =
     [| exit
        fputc
@@ -436,7 +468,8 @@ let funcs =
        memset
        lfind
        bsearch
-       stricmp |]
+       stricmp
+       strtoul |]
 
 let funcStart = 0x00ef0000UL
 let funcEnd = funcStart + uint64(funcs.Length * 4)

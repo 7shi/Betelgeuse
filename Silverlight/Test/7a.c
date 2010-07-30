@@ -31,6 +31,7 @@ void *(*memset)(void *, int, size_t) = (void *)0x00ef0040;
 void *(*lfind)(const void *, const void *, size_t *, size_t, int (*)(const void *, const void *)) = (void *)0x00ef0044;
 void *(*bsearch)(const void *, const void *, size_t, size_t, int (*)(const void *, const void *)) = (void *)0x00ef0048;
 int (*stricmp)(const char *, const char *) = (void *)0x00ef004c;
+unsigned long (*strtoul)(const char *, char **, int) = (void *)0x00ef0050;
 #else
 typedef long long int64_t;
 typedef unsigned long long uint64_t;
@@ -59,6 +60,7 @@ void *memset(void *, int, size_t);
 void *lfind(const void *, const void *, size_t *, size_t, int (*)(const void *, const void *));
 void *bsearch(const void *, const void *, size_t, size_t, int (*)(const void *, const void *));
 int stricmp(const char *, const char *);
+unsigned long strtoul(const char *, char **, int);
 #endif
 
 /* Alpha declaration */
@@ -1042,43 +1044,7 @@ enum Token read_token()
     return EndL;
 }
 
-uint64_t parse_uint(const char *n)
-{
-    uint64_t ret = 0;
-    char ch;
-    while (ch = *(n++))
-    {
-        int n;
-        if ('0' <= ch && ch <= '9')
-            n = ch - '0';
-        else
-            break;
-        ret *= 10;
-        ret += n;
-    }
-    return ret;
-}
-
-uint64_t parse_hex(const char *hex)
-{
-    uint64_t ret = 0;
-    char ch;
-    while (ch = *(hex++))
-    {
-        int n;
-        if ('0' <= ch && ch <= '9')
-            n = ch - '0';
-        else if ('A' <= ch && ch <= 'F')
-            n = ch - 'A' + 10;
-        else if ('a' <= ch && ch <= 'f')
-            n = ch - 'a' + 10;
-        else
-            break;
-        ret <<= 4;
-        ret += n;
-    }
-    return ret;
-}
+char *dummy;
 
 int parse_reg(enum Regs *reg, const char *s)
 {
@@ -1086,7 +1052,7 @@ int parse_reg(enum Regs *reg, const char *s)
     if ((ch == 'r' || ch == 'R' || ch == 'f' || ch == 'F') && is_num(s[1])
         && (s[2] == 0 || (is_num(s[2]) && s[3] == 0)))
     {
-        int r = (int)parse_uint(s + 1);
+        int r = (int)strtoul(s + 1, &dummy, 10);
         if (0 <= r && r <= 31)
         {
             *reg = (enum Regs)r;
@@ -1144,13 +1110,13 @@ int parse_addr(enum Regs *reg, int *disp)
     }
     if (token == Int)
     {
-        *disp = ((int)parse_uint(token_buf)) * sign;
+        *disp = ((int)strtoul(token_buf, &dummy, 10)) * sign;
         sign = 0;
         token = read_token();
     }
     else if (token == Hex)
     {
-        *disp = ((int)parse_hex(token_buf + 2)) * sign;
+        *disp = ((int)strtoul(token_buf + 2, &dummy, 16)) * sign;
         sign = 0;
         token = read_token();
     }
@@ -1180,10 +1146,10 @@ int parse_value(uint64_t *v)
     switch (token)
     {
     case Int:
-        *v = parse_uint(token_buf);
+        *v = strtoul(token_buf, &dummy, 10);
         return 1;
     case Hex:
-        *v = parse_hex(token_buf + 2);
+        *v = strtoul(token_buf + 2, &dummy, 16);
         return 1;
     case EndL:
     case EndF:
@@ -1201,10 +1167,10 @@ int parse_reg_or_value(enum Regs *reg, uint64_t *v)
     switch (token)
     {
     case Int:
-        *v = parse_uint(token_buf);
+        *v = strtoul(token_buf, &dummy, 10);
         return 2;
     case Hex:
-        *v = parse_hex(token_buf + 2);
+        *v = strtoul(token_buf + 2, &dummy, 16);
         return 2;
     case Symbol:
         if (get_reg(reg, token, "register or value"))
@@ -1318,7 +1284,7 @@ void parse_bra(enum Op op)
     case Hex:
         {
             int64_t ad1 = (int64_t)(curad + 4);
-            int64_t ad2 = (int64_t)parse_hex(token_buf + 2);
+            int64_t ad2 = (int64_t)strtoul(token_buf + 2, &dummy, 16);
             int diff = (int)(ad2 - ad1);
             if ((diff & 3) != 0)
                 printf("%d: error: not align 4: %s\n", curline, token_buf);
@@ -1507,7 +1473,7 @@ int assemble_token(enum Token token)
     {
     case Addr:
         {
-            uint64_t h = parse_hex(token_buf + 2);
+            uint64_t h = strtoul(token_buf + 2, &dummy, 16);
             if (curad == 0) text_addr = h;
             curad = h;
             return 1;
@@ -1523,7 +1489,7 @@ int assemble_token(enum Token token)
                 assemble_pop((enum POp)opn);
             else if (token_buf[0] == 'o' && token_buf[1] == 'p' && token_buf[2] == 'c')
             {
-                int op1 = (int)parse_uint(token_buf + 3);
+                int op1 = (int)strtoul(token_buf + 3, &dummy, 10);
                 uint64_t num;
                 if (!parse_value(&num)) return 0;
                 assemble_pcd(op1, (int)num);
