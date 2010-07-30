@@ -416,9 +416,6 @@ let bsearch (vm:VM) =
                 pseudoCall_2 vm (0x00ef0048UL + 4UL) compare a b
                 int << int64 <| vm.v0))
 
-let _divl (vm:VM) =
-    vm.v0 <- uint64 <| int(vm.a0) / int(vm.a1)
-
 let funcs =
     [| exit
        fputc
@@ -439,8 +436,7 @@ let funcs =
        memset
        lfind
        bsearch
-       stricmp
-       _divl |]
+       stricmp |]
 
 let funcStart = 0x00ef0000UL
 let funcEnd = funcStart + uint64(funcs.Length * 4)

@@ -31,7 +31,6 @@ void *(*memset)(void *, int, size_t) = (void *)0x00ef0040;
 void *(*lfind)(const void *, const void *, size_t *, size_t, int (*)(const void *, const void *)) = (void *)0x00ef0044;
 void *(*bsearch)(const void *, const void *, size_t, size_t, int (*)(const void *, const void *)) = (void *)0x00ef0048;
 int (*stricmp)(const char *, const char *) = (void *)0x00ef004c;
-int (*_divl)(int, int) = (void*)0x00ef0050;
 #else
 typedef long long int64_t;
 typedef unsigned long long uint64_t;
@@ -60,7 +59,6 @@ void *memset(void *, int, size_t);
 void *lfind(const void *, const void *, size_t *, size_t, int (*)(const void *, const void *));
 void *bsearch(const void *, const void *, size_t, size_t, int (*)(const void *, const void *));
 int stricmp(const char *, const char *);
-int _divl(int a, int b) { return a / b; }
 #endif
 
 /* Alpha declaration */
@@ -854,31 +852,24 @@ void init_table()
     }
 }
 
-int bsearch_string(const char *target, const void *list, size_t len, size_t width)
-{
-    const char *p = bsearch(target, list, len, width, (void *)stricmp);
-    return p ? _divl((int)(p - (const char *)list), (int)width) : -1;
-}
-
-int lsearch_string(const char *target, const void *list, size_t len, size_t width)
-{
-    const char *p = lfind(target, list, &len, width, (void *)stricmp);
-    return p ? _divl((int)(p - (const char *)list), (int)width) : -1;
-}
-
 int search_op(const char *mne)
 {
-    return bsearch_string(mne, opnames, oplen, sizeof(opnames[0]));
+    const char *p = bsearch(mne, opnames, oplen, 16, (void *)stricmp);
+    return p ? (p - opnames[0]) >> 4 : -1;
 }
 
 int search_pop(const char *mne)
 {
-    return lsearch_string(mne, popnames, reglen, sizeof(popnames[0]));
+    size_t len = poplen;
+    const char *p = lfind(mne, popnames, &len, 16, (void *)stricmp);
+    return p ? (p - popnames[0]) >> 4 : -1;
 }
 
 int search_reg(const char *reg)
 {
-    return lsearch_string(reg, regname, reglen, sizeof(regname[0]));
+    size_t len = reglen;
+    const char *p = lfind(reg, regname, &len, 8, (void *)stricmp);
+    return p ? (p - regname[0]) >> 3 : -1;
 }
 
 uint64_t text_addr, text_size, curad;

@@ -31,7 +31,6 @@ void *(*memset)(void *, int, size_t) = (void *)0x00ef0040;
 void *(*lfind)(const void *, const void *, size_t *, size_t, int (*)(const void *, const void *)) = (void *)0x00ef0044;
 void *(*bsearch)(const void *, const void *, size_t, size_t, int (*)(const void *, const void *)) = (void *)0x00ef0048;
 int (*stricmp)(const char *, const char *) = (void *)0x00ef004c;
-int (*_divl)(int, int) = (void*)0x00ef0050;
 #else
 typedef long long int64_t;
 typedef unsigned long long uint64_t;
@@ -60,7 +59,6 @@ void *memset(void *, int, size_t);
 void *lfind(const void *, const void *, size_t *, size_t, int (*)(const void *, const void *));
 void *bsearch(const void *, const void *, size_t, size_t, int (*)(const void *, const void *));
 int stricmp(const char *, const char *);
-int _divl(int a, int b) { return a / b; }
 #endif
 
 /* Alpha declaration */
