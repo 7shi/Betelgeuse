@@ -907,48 +907,7 @@ char *line_ptr;
 void read_line()
 {
     line_ptr = fgets(line_buf, sizeof(line_buf), file);
-}
-
-int read_char()
-{
-    int ret;
-    if (!line_ptr) return -1;
-    ret = *(line_ptr++);
-    if (ret == 0)
-    {
-        read_line();
-        ret = line_ptr ? *(line_ptr++) : -1;
-    }
-    if (ret == '\n') line++;
-    return ret;
-}
-
-void skip_line()
-{
-    read_line();
-}
-
-int is_letter(int ch) { return ch == '_' || isalnum(ch); }
-int is_oct(int ch) { return '0' <= ch && ch <= '7'; }
-int is_hex(int ch) { return isdigit(ch) || ('A' <= ch && ch <= 'F') || ('a' <= ch && ch <= 'f'); }
-
-void read_chars(char *buf, int len, int(*cond)(int))
-{
-    int p = 0;
-    for (;;)
-    {
-        int ch = read_char();
-        if (cond(ch))
-        {
-            if (p < len) buf[p++] = p < len - 1 ? ch : 0;
-        }
-        else
-        {
-            if (p < len) buf[p] = 0;
-            line_ptr--;
-            return;
-        }
-    }
+    line++;
 }
 
 char token_buf[32];
@@ -956,21 +915,15 @@ int64_t token_num;
 
 enum Token read_token()
 {
-    int p = 0;
-    for (;;)
+    while (line_ptr)
     {
-        int ch = read_char();
-        if (ch == -1)
+        int ch = *(line_ptr++);
+        if (ch == 0)
+            read_line();
+        else if (ch == '\n' || ch == ';')
         {
-            if (p < sizeof(token_buf)) token_buf[p] = 0;
-            return EndF;
-        }
-        else if (ch == '\n')
-            break;
-        else if (ch == ';')
-        {
-            skip_line();
-            break;
+            read_line();
+            return EndL;
         }
         else if (ch <= ' ')
         {
@@ -986,38 +939,34 @@ enum Token read_token()
             }
             return Num;
         }
-        else if (is_letter(ch))
+        else if (isalpha(ch) || ch == '_')
         {
-            line_ptr--;
-            read_chars(token_buf, sizeof(token_buf), is_letter);
+            char *p = token_buf, *ep = p + sizeof(token_buf) - 1;
+            *(p++) = ch;
             for (;;)
             {
-                ch = read_char();
-                if (ch == -1 || ch == '\n' || ch > ' ')
+                ch = *(line_ptr++);
+                if (isalnum(ch) || ch == '_')
                 {
+                    if (p < ep) *(p++) = ch;
+                }
+                else
+                {
+                    *p = 0;
+                    if (ch == ':') return Label;
                     line_ptr--;
-                    break;
+                    return Symbol;
                 }
             }
-            if (*line_ptr == ':')
-            {
-                line_ptr++;
-                return Label;
-            }
-            return Symbol;
         }
         else
         {
-            if (p < sizeof(token_buf))
-            {
-                token_buf[p++] = p < sizeof(token_buf) - 1 ? ch : 0;
-                if (p < sizeof(token_buf)) token_buf[p] = 0;
-            }
+            token_buf[0] = ch;
+            token_buf[1] = 0;
             return Sign;
         }
     }
-    if (p < sizeof(token_buf)) token_buf[p] = 0;
-    return EndL;
+    return EndF;
 }
 
 char *dummy;
@@ -1051,7 +1000,7 @@ int get_reg(enum Regs *reg, enum Token token, const char *msg)
 {
     if (token == Symbol && parse_reg(reg, token_buf)) return 1;
     printf("%d: error: %s required: %s\n", curline, msg ? msg : "register", token_buf);
-    if (token != EndL) skip_line();
+    if (token != EndL) read_line();
     return 0;
 }
 
@@ -1066,7 +1015,7 @@ int is_sign(enum Token token, const char *sign)
     printf("%d: error: '%s' required", curline, sign);
     if (token_buf[0] != 0) printf(": %s", token_buf);
     printf("\n");
-    if (token != EndL) skip_line();
+    if (token != EndL) read_line();
     return 1;
 }
 
@@ -1095,7 +1044,7 @@ int parse_addr(enum Regs *reg, int *disp)
         if (sign != 0)
         {
             printf("%d: error: disp or addr required: %s\n", curline, token_buf);
-            if (token != EndL) skip_line();
+            if (token != EndL) read_line();
             return 0;
         }
         else if (!(token == EndF || token == EndL))
@@ -1124,7 +1073,7 @@ int parse_value(uint64_t *v)
         return 0;
     }
     printf("%d: error: value required: %s\n", curline, token_buf);
-    if (token != EndL) skip_line();
+    if (token != EndL) read_line();
     return 0;
 }
 
@@ -1146,7 +1095,7 @@ int parse_reg_or_value(enum Regs *reg, uint64_t *v)
         return 0;
     }
     printf("%d: error: register or value required: %s\n", curline, token_buf);
-    if (token != EndL) skip_line();
+    if (token != EndL) read_line();
     return 0;
 }
 
@@ -1470,7 +1419,7 @@ void assemble()
     enum Token token;
     text_addr = curad = 0;
     text_size = 0;
-    line = 1;
+    line = 0;
     read_line();
     memset(text_buf, 0, sizeof(text_buf));
     for (;;)
@@ -1481,7 +1430,7 @@ void assemble()
         if (!assemble_token(token))
         {
             printf("%d: error: %s\n", curline, token_buf);
-            skip_line();
+            read_line();
         }
     }
     text_size = curad - text_addr;
