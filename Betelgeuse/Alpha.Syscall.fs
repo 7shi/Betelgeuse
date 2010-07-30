@@ -55,19 +55,20 @@ let _fputc (vm:VM) (ch:byte) (f:int) =
 let fputc (vm:VM) =
     vm.v0 <- _fputc vm (vm.a0 |> byte) (vm.a1 |> int)
 
-let fgetc (vm:VM) =
-    vm.v0 <-
-        let f = vm.a0 |> int
-        let fs = getSlot f
-        if box fs = null then uint64(-1)
+let _fgetc_stream (fs:Stream) attr =
+    try
+        let ch = fs.ReadByte()
+        if ch = int('\r') && (attr &&& aText) <> 0 then
+            fs.ReadByte() |> int
         else
-            try
-                let ch = fs.ReadByte()
-                if ch = int('\r') && (attrs.[f] &&& aText) <> 0 then
-                    fs.ReadByte() |> uint64
-                else
-                    ch |> uint64
-            with _ -> uint64(-1)
+            ch |> int
+    with _ -> -1
+
+let _fgetc f =
+    let fs = getSlot f
+    if box fs = null then -1 else _fgetc_stream fs attrs.[f]
+
+let fgetc (vm:VM) = vm.v0 <- uint64 <| _fgetc (int vm.a0)
 
 let fopen (vm:VM) =
     vm.v0 <-
@@ -194,7 +195,7 @@ let _fsnprintstr vm (buf:byte[]) (ptr:int) f sb sp =
         let rec count p =
             if buf.[ptr + p] = 0uy then p else count (p + 1)
         let len = count 0
-        vm.out.Write(Encoding.UTF8.GetString(buf, ptr, len))
+        vm.out.Write(Encoding.UTF8.GetString(buf, ptr, len).Replace("\n", "\r\n"))
         len
     else
         let rec write p =
@@ -462,6 +463,37 @@ let islower (vm:VM) = vm.v0 <- _btoul << _islower << char <| vm.a0
 let isalpha (vm:VM) = vm.v0 <- _btoul << _isalpha << char <| vm.a0
 let isalnum (vm:VM) = vm.v0 <- _btoul << _isalnum << char <| vm.a0
 
+let fgets (vm:VM) =
+    vm.v0 <-
+        let buf = vm.a0
+        let len = vm.a1 |> int
+        let f = vm.a2 |> int
+        let fs = getSlot f
+        if box fs = null then 0UL else
+            let attr = attrs.[f]
+            let mp = getPtr vm buf 1
+            let rec read i len =
+                if len = 1 then
+                    mp.buf.[mp.ptr + i] <- 0uy
+                    true
+                else if len < 1 then
+                    false
+                else
+                    let ch = _fgetc_stream fs attr
+                    if ch < 0 && i = 0 then
+                        false
+                    else if ch < 1 then
+                        mp.buf.[mp.ptr + i] <- 0uy
+                        true
+                    else
+                        mp.buf.[mp.ptr + i] <- byte <| ch
+                        if ch = int('\n') then
+                            mp.buf.[mp.ptr + i + 1] <- 0uy
+                            true
+                        else
+                            read (i + 1) (len - 1)
+            if read 0 len then buf else 0UL
+
 let funcs =
     [| exit
        fputc
@@ -488,7 +520,8 @@ let funcs =
        isupper
        islower
        isalpha
-       isalnum |]
+       isalnum
+       fgets |]
 
 let funcStart = 0x00ef0000UL
 let funcEnd = funcStart + uint64(funcs.Length * 4)

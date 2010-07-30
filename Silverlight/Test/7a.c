@@ -37,6 +37,7 @@ int (*isupper)(int) = (void *)0x00ef0058;
 int (*islower)(int) = (void *)0x00ef005c;
 int (*isalpha)(int) = (void *)0x00ef0060;
 int (*isalnum)(int) = (void *)0x00ef0064;
+char *(*fgets)(char *, size_t, FILE *) = (void *)0x00ef0068;
 #else
 typedef long long int64_t;
 typedef unsigned long long uint64_t;
@@ -71,6 +72,7 @@ int isupper(int);
 int islower(int);
 int isalpha(int);
 int isalnum(int);
+char *fgets(char *, size_t, FILE *);
 #endif
 
 /* Alpha declaration */
@@ -889,38 +891,41 @@ char text_buf[65536];
 int line, curline;
 FILE *file;
 
-int last_ch = -1;
-
 enum Token
 {
-    EndF, EndL, Int, Hex, Oct, Symbol, Label, Sign, Addr
+    EndF, EndL, Num, Symbol, Label, Sign, Addr
 };
 
 const char *tokenName[] =
 {
-    "endf", "endl", "int", "hex", "oct", "symbol", "label", "sign", "addr"
+    "endf", "endl", "num", "symbol", "label", "sign", "addr"
 };
+
+char line_buf[256];
+char *line_ptr;
+
+void read_line()
+{
+    line_ptr = fgets(line_buf, sizeof(line_buf), file);
+}
 
 int read_char()
 {
-    int ret = last_ch;
-    if (ret == -1)
+    int ret;
+    if (!line_ptr) return -1;
+    ret = *(line_ptr++);
+    if (ret == 0)
     {
-        ret = fgetc(file);
-        if (ret == '\n') line++;
+        read_line();
+        ret = line_ptr ? *(line_ptr++) : -1;
     }
-    else
-        last_ch = -1;
+    if (ret == '\n') line++;
     return ret;
 }
 
 void skip_line()
 {
-    for (;;)
-    {
-        int ch = read_char();
-        if (ch == -1 || ch == '\n') break;
-    }
+    read_line();
 }
 
 int is_letter(int ch) { return ch == '_' || isalnum(ch); }
@@ -940,13 +945,14 @@ void read_chars(char *buf, int len, int(*cond)(int))
         else
         {
             if (p < len) buf[p] = 0;
-            last_ch = ch;
+            line_ptr--;
             return;
         }
     }
 }
 
 char token_buf[32];
+int64_t token_num;
 
 enum Token read_token()
 {
@@ -970,67 +976,32 @@ enum Token read_token()
         {
             /* skip */
         }
-        else if (ch == '0')
-        {
-            if (p < sizeof(token_buf))
-                token_buf[p++] = p < sizeof(token_buf) - 1 ? ch : 0;
-            ch = read_char();
-            if (is_oct(ch))
-            {
-                last_ch = ch;
-                read_chars(token_buf + p, sizeof(token_buf) - p, is_oct);
-                return Oct;
-            }
-            else if (ch == 'x')
-            {
-                if (p < sizeof(token_buf))
-                    token_buf[p++] = p < sizeof(token_buf) - 1 ? ch : 0;
-                read_chars(token_buf + p, sizeof(token_buf) - p, is_hex);
-                for (;;)
-                {
-                    ch = read_char();
-                    if (ch == -1 || ch == '\n' || ch > ' ')
-                    {
-                        last_ch = ch;
-                        break;
-                    }
-                }
-                if (last_ch == ':')
-                {
-                    last_ch = -1;
-                    return Addr;
-                }
-                return Hex;
-            }
-            else
-            {
-                last_ch = ch;
-                if (p < sizeof(token_buf)) token_buf[p] = 0;
-                return Int;
-            }
-        }
         else if (isdigit(ch))
         {
-            last_ch = ch;
-            read_chars(token_buf, sizeof(token_buf), isdigit);
-            return Int;
+            token_num = strtoul(line_ptr - 1, &line_ptr, 0);
+            if (*line_ptr == ':')
+            {
+                line_ptr++;
+                return Addr;
+            }
+            return Num;
         }
         else if (is_letter(ch))
         {
-            last_ch = ch;
+            line_ptr--;
             read_chars(token_buf, sizeof(token_buf), is_letter);
             for (;;)
             {
                 ch = read_char();
                 if (ch == -1 || ch == '\n' || ch > ' ')
                 {
-                    last_ch = ch;
+                    line_ptr--;
                     break;
                 }
             }
-            if (last_ch == ':')
+            if (*line_ptr == ':')
             {
-                last_ch = -1;
+                line_ptr++;
                 return Label;
             }
             return Symbol;
@@ -1113,15 +1084,9 @@ int parse_addr(enum Regs *reg, int *disp)
         sign = -1;
         token = read_token();
     }
-    if (token == Int)
+    if (token == Num)
     {
-        *disp = ((int)strtoul(token_buf, &dummy, 10)) * sign;
-        sign = 0;
-        token = read_token();
-    }
-    else if (token == Hex)
-    {
-        *disp = ((int)strtoul(token_buf + 2, &dummy, 16)) * sign;
+        *disp = ((int)token_num) * sign;
         sign = 0;
         token = read_token();
     }
@@ -1150,11 +1115,8 @@ int parse_value(uint64_t *v)
     enum Token token = read_token();
     switch (token)
     {
-    case Int:
-        *v = strtoul(token_buf, &dummy, 10);
-        return 1;
-    case Hex:
-        *v = strtoul(token_buf + 2, &dummy, 16);
+    case Num:
+        *v = token_num;
         return 1;
     case EndL:
     case EndF:
@@ -1171,11 +1133,8 @@ int parse_reg_or_value(enum Regs *reg, uint64_t *v)
     enum Token token = read_token();
     switch (token)
     {
-    case Int:
-        *v = strtoul(token_buf, &dummy, 10);
-        return 2;
-    case Hex:
-        *v = strtoul(token_buf + 2, &dummy, 16);
+    case Num:
+        *v = token_num;
         return 2;
     case Symbol:
         if (get_reg(reg, token, "register or value"))
@@ -1286,10 +1245,10 @@ void parse_bra(enum Op op)
     }
     switch (token)
     {
-    case Hex:
+    case Num:
         {
             int64_t ad1 = (int64_t)(curad + 4);
-            int64_t ad2 = (int64_t)strtoul(token_buf + 2, &dummy, 16);
+            int64_t ad2 = (int64_t)token_num;
             int diff = (int)(ad2 - ad1);
             if ((diff & 3) != 0)
                 printf("%d: error: not align 4: %s\n", curline, token_buf);
@@ -1478,9 +1437,8 @@ int assemble_token(enum Token token)
     {
     case Addr:
         {
-            uint64_t h = strtoul(token_buf + 2, &dummy, 16);
-            if (curad == 0) text_addr = h;
-            curad = h;
+            if (curad == 0) text_addr = token_num;
+            curad = token_num;
             return 1;
         }
     case EndL:
@@ -1513,6 +1471,7 @@ void assemble()
     text_addr = curad = 0;
     text_size = 0;
     line = 1;
+    read_line();
     memset(text_buf, 0, sizeof(text_buf));
     for (;;)
     {
