@@ -26,6 +26,8 @@ void *(*memcpy)(void *, const void *, size_t) = (void *)0x00ef003c;
 void *(*memset)(void *, int, size_t) = (void *)0x00ef0040;
 void *(*lfind)(const void *, const void *, size_t *, size_t, int (*)(const void *, const void *)) = (void *)0x00ef0044;
 void *(*bsearch)(const void *, const void *, size_t, size_t, int (*)(const void *, const void *)) = (void *)0x00ef0048;
+int (*stricmp)(const char *, const char *) = (void *)0x00ef004c;
+int (*_divl)(int, int) = (void*)0x00ef0050;
 
 /* -------------------------------- */
 

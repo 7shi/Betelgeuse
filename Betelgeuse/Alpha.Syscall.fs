@@ -369,7 +369,7 @@ let pseudoCall_2 (vm:VM) (ra:uint64) (proc:uint64) (a0:uint64) (a1:uint64) =
 
 let rec _lfind (vm:VM) (key:uint64) (base':uint64) num width proc =
     if num < 1 then 0UL
-    else if (proc vm key (read64 vm base')) = 0 then base'
+    else if (proc vm key base') = 0 then base'
     else _lfind vm key (base' + width) (num - 1) width proc
 
 let lfind (vm:VM) =
@@ -378,9 +378,9 @@ let lfind (vm:VM) =
     let num = read32 vm vm.a2 |> int
     let width = vm.a3
     let compare = vm.a4
-    if width = 8UL && compare = 0x00ef002cUL then
+    if compare = 0x00ef002cUL then
         vm.v0 <- _lfind vm key base' num width _strcmp
-    else if width = 8UL && compare = 0x00ef004cUL then
+    else if compare = 0x00ef004cUL then
         vm.v0 <- _lfind vm key base' num width _stricmp
     else
         pseudoProc vm (fun() ->
@@ -392,7 +392,7 @@ let rec _bsearch (vm:VM) (key:uint64) (base':uint64) num width proc =
     if num <= 4 then _lfind vm key base' num width proc else
         let center = (num - 1) / 2
         let pcenter = base' + uint64(center) * width
-        let cmp = proc vm key (read64 vm pcenter)
+        let cmp = proc vm key pcenter
         if cmp = 0 then
             pcenter
         else if cmp < 0 then
@@ -406,15 +406,18 @@ let bsearch (vm:VM) =
     let num = vm.a2 |> int
     let width = vm.a3
     let compare = vm.a4
-    if width = 8UL && compare = 0x00ef002cUL then
+    if compare = 0x00ef002cUL then
         vm.v0 <- _bsearch vm key base' num width _strcmp
-    else if width = 8UL && compare = 0x00ef004cUL then
+    else if compare = 0x00ef004cUL then
         vm.v0 <- _bsearch vm key base' num width _stricmp
     else
         pseudoProc vm (fun() ->
             _bsearch vm key base' num width (fun vm a b ->
                 pseudoCall_2 vm (0x00ef0048UL + 4UL) compare a b
                 int << int64 <| vm.v0))
+
+let _divl (vm:VM) =
+    vm.v0 <- uint64 <| int(vm.a0) / int(vm.a1)
 
 let funcs =
     [| exit
@@ -436,7 +439,8 @@ let funcs =
        memset
        lfind
        bsearch
-       stricmp |]
+       stricmp
+       _divl |]
 
 let funcStart = 0x00ef0000UL
 let funcEnd = funcStart + uint64(funcs.Length * 4)

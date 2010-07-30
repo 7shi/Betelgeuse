@@ -31,6 +31,7 @@ void *(*memset)(void *, int, size_t) = (void *)0x00ef0040;
 void *(*lfind)(const void *, const void *, size_t *, size_t, int (*)(const void *, const void *)) = (void *)0x00ef0044;
 void *(*bsearch)(const void *, const void *, size_t, size_t, int (*)(const void *, const void *)) = (void *)0x00ef0048;
 int (*stricmp)(const char *, const char *) = (void *)0x00ef004c;
+int (*_divl)(int, int) = (void*)0x00ef0050;
 #else
 typedef long long int64_t;
 typedef unsigned long long uint64_t;
@@ -91,7 +92,7 @@ enum Regs
     /* r31     */ Zero,
 };
 
-const char *regname[] =
+const char regname[][8] =
 {
     /* r00     */ "v0",
     /* r01-r08 */ "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
@@ -107,7 +108,7 @@ const char *regname[] =
     /* r31     */ "zero",
 };
 
-const int reglen = sizeof(regname) / sizeof(const char *);
+const int reglen = sizeof(regname) / sizeof(regname[0]);
 
 enum Op
 {
@@ -635,7 +636,7 @@ enum Op
     Bgt = 0x3f0000,
 };
 
-const char *opnames[] =
+const char opnames[][16] =
 {
     "addf", "addf/c", "addf/s", "addf/sc", "addf/su", "addf/suc", "addf/u", "addf/uc",
     "addg", "addg/c", "addg/s", "addg/sc", "addg/su", "addg/suc", "addg/u", "addg/uc",
@@ -775,7 +776,7 @@ enum Op opcodes[] =
     Zapnot,
 };
 
-const int oplen = sizeof(opnames) / sizeof(const char *);
+const int oplen = sizeof(opnames) / sizeof(opnames[0]);
 
 const char *op00[1], *op01[1], *op02[1], *op03[1];
 const char *op04[1], *op05[1], *op06[1], *op07[1];
@@ -815,7 +816,7 @@ enum POp
     Negs, Negs__su, Negs__sui, Negt, Negt__su, Negt__sui
 };
 
-const char *popnames[] =
+const char popnames[][16] =
 {
     "mov", "nop", "clr",
     "sextl", "not", "negl", "negl/v", "negq", "negq/v",
@@ -833,7 +834,7 @@ enum Op popcodes[] =
     Subs, Subs__su, Subs__sui, Subt, Subt__su, Subt__sui
 };
 
-const int poplen = sizeof(popnames) / sizeof(const char *);
+const int poplen = sizeof(popnames) / sizeof(popnames[0]);
 
 /* assembler implementation */
 
@@ -847,21 +848,31 @@ void init_table()
     }
 }
 
-int bsearch_string(const char **list, const char *target, int len)
+int bsearch_string(const char *target, const void *list, size_t len, size_t width)
 {
-    const char **p = bsearch(target, list, len, sizeof(const char *), (void *)stricmp);
-    return p ? p - list : -1;
+    const char *p = bsearch(target, list, len, width, (void *)stricmp);
+    return p ? _divl((int)(p - (const char *)list), (int)width) : -1;
 }
 
-int lsearch_string(const char **list, size_t len, const char *target)
+int lsearch_string(const char *target, const void *list, size_t len, size_t width)
 {
-    const char **p = lfind(target, list, &len, sizeof(const char *), (void *)stricmp);
-    return p ? p - list : -1;
+    const char *p = lfind(target, list, &len, width, (void *)stricmp);
+    return p ? _divl((int)(p - (const char *)list), (int)width) : -1;
 }
 
 int search_op(const char *mne)
 {
-    return bsearch_string(opnames, mne, oplen);
+    return bsearch_string(mne, opnames, oplen, sizeof(opnames[0]));
+}
+
+int search_pop(const char *mne)
+{
+    return lsearch_string(mne, popnames, reglen, sizeof(popnames[0]));
+}
+
+int search_reg(const char *reg)
+{
+    return lsearch_string(reg, regname, reglen, sizeof(regname[0]));
 }
 
 uint64_t text_addr, text_size, curad;
@@ -1087,7 +1098,7 @@ int parse_reg(enum Regs *reg, const char *s)
     }
     else
     {
-        int r = lsearch_string(regname, reglen, s);
+        int r = search_reg(s);
         if (r != -1)
         {
             *reg = (enum Regs)r;
@@ -1511,7 +1522,7 @@ int assemble_token(enum Token token)
             int opn;
             if ((opn = search_op(token_buf)) != -1)
                 assemble_op(opcodes[opn]);
-            else if ((opn = lsearch_string(popnames, poplen, token_buf)) != -1)
+            else if ((opn = search_pop(token_buf)) != -1)
                 assemble_pop((enum POp)opn);
             else if (token_buf[0] == 'o' && token_buf[1] == 'p' && token_buf[2] == 'c')
             {
@@ -1520,6 +1531,8 @@ int assemble_token(enum Token token)
                 if (!parse_value(&num)) return 0;
                 assemble_pcd(op1, (int)num);
             }
+            else
+                return 0;
             return 1;
         }
     }
