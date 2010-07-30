@@ -38,6 +38,8 @@ typedef unsigned long long uint64_t;
 
 #ifdef _MSC_VER
 #define snprintf _snprintf
+#define lfind _lfind
+#define stricmp _stricmp
 #endif
 
 int printf(const char *, ...);
@@ -55,6 +57,10 @@ char *strncat(char *, const char *, size_t);
 size_t strlen(const char *);
 void *memcpy(void *, const void *, size_t);
 void *memset(void *, int, size_t);
+void *lfind(const void *, const void *, size_t *, size_t, int (*)(const void *, const void *));
+void *bsearch(const void *, const void *, size_t, size_t, int (*)(const void *, const void *));
+int stricmp(const char *, const char *);
+int _divl(int a, int b) { return a / b; }
 #endif
 
 /* Alpha declaration */
