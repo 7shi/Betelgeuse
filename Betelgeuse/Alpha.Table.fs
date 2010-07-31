@@ -11,8 +11,8 @@ let formats =
           (* 0c-0f *) Format.Mem; Format.Mem; Format.Mem; Format.Mem
           (* 10-13 *) Format.Opr; Format.Opr; Format.Opr; Format.Opr
           (* 14-17 *) Format.F_P; Format.F_P; Format.F_P; Format.F_P
-          (* 18-1b *) Format.Mfc; Format.___; Format.Mbr; Format.___
-          (* 1c-1f *) Format.Opr; Format.___; Format.___; Format.___
+          (* 18-1b *) Format.Mfc; Format.Pcd; Format.Mbr; Format.Pcd
+          (* 1c-1f *) Format.Opr; Format.Pcd; Format.Pcd; Format.Pcd
           (* 20-23 *) Format.Mem; Format.Mem; Format.Mem; Format.Mem
           (* 24-27 *) Format.Mem; Format.Mem; Format.Mem; Format.Mem
           (* 28-2b *) Format.Mem; Format.Mem; Format.Mem; Format.Mem

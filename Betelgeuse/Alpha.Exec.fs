@@ -162,7 +162,26 @@ let execOp vm =
             | Op.S4subl -> reg.[rc] <- uint64 << int <| (va_l <<< 2) - vb_l
             | Op.S8subl -> reg.[rc] <- uint64 << int <| (va_l <<< 3) - vb_l
 
-            | _ -> ()
+            | _ -> raise << vm.Abort <| sprintf "未実装: [opr] %s" (getMnemonic op)
+    | Format.Pcd ->
+        let pal = int(code &&& 0x03ffffffu)
+        match op with
+        | Op.Pal1f ->
+            match pal with
+            | 0x0000f000 -> // __divl
+                vm.pv <- uint64(int(vm.t10) / int(vm.t11))
+                vm.pc <- vm.t9
+            | 0x0000f001 -> // __divlu
+                vm.pv <- uint64(uint32(vm.t10) / uint32(vm.t11))
+                vm.pc <- vm.t9
+            | 0x0000f002 -> // __divq
+                vm.pv <- uint64(int64(vm.t10) / int64(vm.t11))
+                vm.pc <- vm.t9
+            | 0x0000f003 -> // __divqu
+                vm.pv <- vm.t10 / vm.t11
+                vm.pc <- vm.t9
+            | _ -> raise << vm.Abort <| sprintf "未実装: [pcd] %s %08x" (getMnemonic op) pal
+        | _ -> raise << vm.Abort <| sprintf "未実装: [pcd] %s %08x" (getMnemonic op) pal
     | _ -> raise << vm.Abort <| sprintf "未実装: %s" (getMnemonic op)
 
 let exec vm (elf:ELF64) (tw:TextWriter) (args:string[]) =
@@ -187,8 +206,10 @@ let exec vm (elf:ELF64) (tw:TextWriter) (args:string[]) =
     vm.a1 <- argv
 
     let text  = elf.Text
-    let start = text.sh_addr
-    let end'  = start + text.sh_size
+    //let start = text.sh_addr
+    //let end'  = start + text.sh_size
+    let start = vm.memoryStart
+    let end'  = vm.memoryEnd
     vm.pc <- elf.e_entry
     vm.pv <- elf.e_entry // pv(procedure value) for gp(global pointer)
 

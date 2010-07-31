@@ -38,6 +38,7 @@ int (*islower)(int) = (void *)0x00ef005c;
 int (*isalpha)(int) = (void *)0x00ef0060;
 int (*isalnum)(int) = (void *)0x00ef0064;
 char *(*fgets)(char *, size_t, FILE *) = (void *)0x00ef0068;
+int __divl = 0x7c00f000, __divlu = 0x7c00f001, __divq = 0x7c00f002, __divqu = 0x7c00f003;
 #else
 typedef long long int64_t;
 typedef unsigned long long uint64_t;
