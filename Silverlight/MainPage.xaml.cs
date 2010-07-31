@@ -165,17 +165,16 @@ namespace Betelgeuse
                 fs.Write(data, 0, data.Length);
         }
 
-        private void ReadTest(int t)
+        private void ReadTest(string t)
         {
             var tb = textBox1;
             textBox1.Text = textBox2.Text = textBox3.Text = textBox4.Text = "";
             try
             {
-                var tt = t.ToString();
-                using (var s = OpenRead(tt))
-                    ReadElf(new[] { t.ToString() }, s);
+                using (var s = OpenRead(t))
+                    ReadElf(new[] { t }, s);
                 tb = textBox3;
-                using (var s = OpenRead(tt + ".c"))
+                using (var s = OpenRead(t + ".c"))
                 using (var sr = new StreamReader(s))
                     textBox3.Text = sr.ReadToEnd();
             }
@@ -191,10 +190,13 @@ namespace Betelgeuse
             var button = sender as Button;
             if (button == null) return;
 
-            var name = button.Name;
-            if (!name.StartsWith("btnTest")) return;
+            var tag = button.Tag as string;
+            if (tag == null) return;
 
-            ReadTest(int.Parse(name.Substring(7)));
+            var cur = Cursor;
+            Cursor = Cursors.Wait;
+            ReadTest(tag);
+            Cursor = cur;
         }
     }
 }

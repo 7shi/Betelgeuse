@@ -4,7 +4,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="clr-namespace:System.Windows.Controls;assembly=System.Windows.Controls"
-    mc:Ignorable="d" d:DesignHeight="464" d:DesignWidth="558">
+    mc:Ignorable="d" d:DesignHeight="446" d:DesignWidth="736">
 
     <Grid x:Name="LayoutRoot" Background="White">
         <Grid.RowDefinitions>
@@ -22,12 +22,16 @@
                 <Button Content="開く" Name="btnOpen" Click="btnOpen_Click" />
                 <Button Content="保存" Name="btnSave" Click="btnSave_Click" IsEnabled="False" />
                 <Grid Width="4" />
-                <Button Content="Test1" Name="btnTest1" Click="btnTest_Click" />
-                <Button Content="Test2" Name="btnTest2" Click="btnTest_Click" />
-                <Button Content="Test3" Name="btnTest3" Click="btnTest_Click" />
-                <Button Content="Test4" Name="btnTest4" Click="btnTest_Click" />
-                <Button Content="Test5" Name="btnTest5" Click="btnTest_Click" />
-                <Button Content="Test6" Name="btnTest6" Click="btnTest_Click" />
+                <Button Content="Test1" Name="btnTest1" Tag="1" Click="btnTest_Click" />
+                <Button Content="Test2" Name="btnTest2" Tag="2" Click="btnTest_Click" />
+                <Button Content="Test3" Name="btnTest3" Tag="3" Click="btnTest_Click" />
+                <Button Content="Test4" Name="btnTest4" Tag="4" Click="btnTest_Click" />
+                <Button Content="Test5" Name="btnTest5" Tag="5" Click="btnTest_Click" />
+                <Button Content="Test6" Name="btnTest6" Tag="6" Click="btnTest_Click" />
+                <Grid Width="4" />
+                <Button Content="コード抽出" Name="btnTest7t" Tag="7t" Click="btnTest_Click" />
+                <Button Content="逆アセンブラ" Name="btnTest7d" Tag="7d" Click="btnTest_Click" />
+                <Button Content="アセンブラ" Name="btnTest7a" Tag="7a" Click="btnTest_Click" />
                 <Grid Width="4" />
                 <ComboBox Name="comboBox1" SelectedIndex="0">
                     <ComboBoxItem Content="外部逆ASM" />
