@@ -74,4 +74,19 @@ int islower(int);
 int isalpha(int);
 int isalnum(int);
 char *fgets(char *, size_t, FILE *);
+
+#ifdef __INTERIX
+int stricmp(const char *a, const char *b)
+{
+    for (; *a || *b; a++, b++)
+    {
+        char ca = *a, cb = *b;
+        if (isupper(ca)) ca += 32;
+        if (isupper(cb)) cb += 32;
+        if (ca < cb) return -1; else if (ca > cb) return 1;
+    }
+    return 0;
+}
+#endif
+
 #endif
