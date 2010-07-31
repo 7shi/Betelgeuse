@@ -70,7 +70,7 @@ let execOp vm =
         | Op.Ret
         | Op.Jsr_coroutine ->
             if ra <> 31 then reg.[ra] <- vm.pc
-            vm.pc <- vb
+            vm.pc <- vb &&& ~~~3UL
         | _ -> ()
     | Format.Opr ->
         let va = reg.[int(code >>> 21) &&& 31]
