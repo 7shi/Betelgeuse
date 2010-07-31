@@ -44,7 +44,7 @@ type VM =
     member x.t10  with get() = x.reg.[24] and set(v) = x.reg.[24] <- v
     member x.t11  with get() = x.reg.[25] and set(v) = x.reg.[25] <- v
     member x.ra   with get() = x.reg.[26] and set(v) = x.reg.[26] <- v
-    member x.t12  with get() = x.reg.[27] and set(v) = x.reg.[27] <- v
+    member x.pv   with get() = x.reg.[27] and set(v) = x.reg.[27] <- v
     member x.at   with get() = x.reg.[28] and set(v) = x.reg.[28] <- v
     member x.gp   with get() = x.reg.[29] and set(v) = x.reg.[29] <- v
     member x.sp   with get() = x.reg.[30] and set(v) = x.reg.[30] <- v

@@ -359,7 +359,7 @@ let pseudoProc (vm:VM) (proc:unit->uint64) =
 let pseudoCall (vm:VM) (ra:uint64) (proc:uint64) (a0:uint64) =
     vm.a0 <- a0
     vm.ra <- ra
-    vm.t12 <- proc
+    vm.pv <- proc
     vm.pc <- proc
     let fp = vm.fp
     while vm.pc <> ra || vm.fp <> fp do execStep vm

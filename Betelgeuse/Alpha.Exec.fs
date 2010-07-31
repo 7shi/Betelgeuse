@@ -190,7 +190,7 @@ let exec vm (elf:ELF64) (tw:TextWriter) (args:string[]) =
     let start = text.sh_addr
     let end'  = start + text.sh_size
     vm.pc <- elf.e_entry
-    vm.t12 <- elf.e_entry // t12 for gp
+    vm.pv <- elf.e_entry // pv(procedure value) for gp(global pointer)
 
     tw.WriteLine("pc={0:x16}: 開始", vm.pc)
     let startTime = DateTime.Now
