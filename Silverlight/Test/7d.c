@@ -1211,7 +1211,9 @@ int read_text(const char *fn)
 {
     int ret = 0;
     FILE *f = fopen(fn, "rb");
-    if (f)
+    if (!f)
+        printf("error: can not open: %s\n", fn);
+    else
     {
         ret = read_text_file(f);
         fclose(f);
@@ -1228,7 +1230,9 @@ void exec(const char *src, const char *dst)
         printf("text_addr: 0x%08x\n", text_addr);
         printf("text_size: 0x%08x\n", text_size);
         f = fopen(dst, "w");
-        if (f)
+        if (!f)
+            printf("error: can not open: %s\n", dst);
+        else
         {
             int j;
             for (j = 0; j < text_size; j += 4)

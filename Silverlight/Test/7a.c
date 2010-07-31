@@ -1441,7 +1441,9 @@ void exec(const char *src, const char *dst)
 {
     printf("%s -> %s\n", src, dst);
     file = fopen(src, "r");
-    if (file)
+    if (!file)
+        printf("error: can not open: %s\n", src);
+    else
     {
         FILE *f;
         assemble();
@@ -1449,7 +1451,9 @@ void exec(const char *src, const char *dst)
         printf("text_addr: 0x%08x\n", text_addr);
         printf("text_size: 0x%08x\n", text_size);
         f = fopen(dst, "wb");
-        if (f)
+        if (!f)
+            printf("error: can not open: %s\n", dst);
+        else
         {
             fwrite(text_buf, (int)text_size, 1, f);
             fclose(f);
