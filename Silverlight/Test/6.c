@@ -1,42 +1,4 @@
-typedef short int16_t;
-typedef int int32_t;
-typedef long int64_t;
-typedef unsigned short uint16_t;
-typedef unsigned int uint32_t;
-typedef unsigned long uint64_t;
-typedef unsigned long size_t;
-typedef void FILE;
-
-void (*exit)(int) = (void *)0x00ef0000;
-int (*fputc)(int, FILE *) = (void *)0x00ef0004;
-int (*fgetc)(FILE *) = (void *)0x00ef0008;
-FILE *(*fopen)(const char *, const char *) = (void *)0x00ef000c;
-int (*fclose)(FILE *) = (void *)0x00ef0010;
-int (*fwrite)(const void *, size_t, size_t, FILE *) = (void *)0x00ef0014;
-int (*fread)(void *, size_t, size_t, FILE *) = (void *)0x00ef0018;
-int (*fseek)(FILE *, long, int) = (void *)0x00ef001c;
-int (*printf)(const char *, ...) = (void *)0x00ef0020;
-int (*fprintf)(FILE *, const char *, ...) = (void *)0x00ef0024;
-int (*snprintf)(char *, size_t, const char *, ...) = (void *)0x00ef0028;
-int (*strcmp)(const char *, const char *) = (void *)0x00ef002c;
-char *(*strncpy)(char *, const char *, size_t) = (void *)0x00ef0030;
-char *(*strncat)(char *, const char *, size_t) = (void *)0x00ef0034;
-size_t (*strlen)(const char *) = (void *)0x00ef0038;
-void *(*memcpy)(void *, const void *, size_t) = (void *)0x00ef003c;
-void *(*memset)(void *, int, size_t) = (void *)0x00ef0040;
-void *(*lfind)(const void *, const void *, size_t *, size_t, int (*)(const void *, const void *)) = (void *)0x00ef0044;
-void *(*bsearch)(const void *, const void *, size_t, size_t, int (*)(const void *, const void *)) = (void *)0x00ef0048;
-int (*stricmp)(const char *, const char *) = (void *)0x00ef004c;
-unsigned long (*strtoul)(const char *, char **, int) = (void *)0x00ef0050;
-int (*isdigit)(int) = (void *)0x00ef0054;
-int (*isupper)(int) = (void *)0x00ef0058;
-int (*islower)(int) = (void *)0x00ef005c;
-int (*isalpha)(int) = (void *)0x00ef0060;
-int (*isalnum)(int) = (void *)0x00ef0064;
-char *(*fgets)(char *, size_t, FILE *) = (void *)0x00ef0068;
-int __divl = 0x7c00f000, __divlu = 0x7c00f001, __divq = 0x7c00f002, __divqu = 0x7c00f003;
-
-/* -------------------------------- */
+#include "libc.h"
 
 int main(int argc, char *argv[])
 {
@@ -45,22 +7,6 @@ int main(int argc, char *argv[])
     FILE *f = fopen("test.txt", "w");
     if (f)
     {
-        {
-            int a = -12345, b = 67, c = a / b;
-            printf("%d / %d = %d\n", a, b, c);
-        }
-        {
-            unsigned int a = 12345, b = 67, c = a / b;
-            printf("%d / %d = %d\n", a, b, c);
-        }
-        {
-            long a = 12345, b = -67, c = a / b;
-            printf("%d / %d = %d\n", a, b, c);
-        }
-        {
-            unsigned long a = 12345, b = 67, c = a / b;
-            printf("%d / %d = %d\n", a, b, c);
-        }
         for (i = 0; i < argc; i++)
             fprintf(f, "argv[%d] = \"%s\"\n", i, argv[i]);
         memset(buf, 'a', 4);
